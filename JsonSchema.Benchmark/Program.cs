@@ -1,5 +1,6 @@
 ﻿using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
+using Json.Schema.Benchmark.Functional;
 using Json.Schema.Benchmark.Suite;
 
 namespace Json.Schema.Benchmark;
@@ -13,7 +14,7 @@ class Program
 		config.WithOptions(ConfigOptions.DisableOptimizationsValidator);
 		var summary = BenchmarkRunner.Run<TestSuiteRunner>(config);
 #else
-		var summary = BenchmarkRunner.Run<TestSuiteRunner>();
+		var summary = BenchmarkRunner.Run<FunctionalRunner>();
 #endif
 	}
 }

@@ -5,6 +5,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Json.Schema.Benchmark</RootNamespace>
     <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FunctionalJsonSchema\FunctionalJsonSchema.csproj" />
     <ProjectReference Include="..\JsonSchema\JsonSchema.csproj" />
   </ItemGroup>
 
