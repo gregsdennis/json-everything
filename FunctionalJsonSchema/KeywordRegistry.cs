@@ -27,7 +27,7 @@ public static class KeywordRegistry
 	{
 		return schema
 			.Select(kvp => (Keyword: kvp, Handler: _handlers.GetValueOrDefault(kvp.Key)))
-			.OrderBy(x => _keywordPriorities[x.Keyword.Key]);
+			.OrderBy(x => _keywordPriorities.GetValueOrDefault(x.Keyword.Key));
 	}
 
 	private static void UpdatePriorities()
@@ -53,7 +53,7 @@ public static class KeywordRegistry
 
 			// without this, we loop forever
 			if (!priorityKeywords.Any())
-				throw new Exception($"Could not find priority for: {string.Join(",", allKeywords.Select(x => x.Name))}");
+				throw new Exception($"Could not find handlers for: {string.Join(", ", allKeywords.SelectMany(x => x.Dependencies).Except(_keywordPriorities.Keys))}");
 
 			foreach (var keyword in priorityKeywords)
 			{

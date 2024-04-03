@@ -57,7 +57,7 @@ public struct EvaluationContext
 
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();
-		var annotations = new JsonObject();
+		var annotations = new Dictionary<string, JsonNode?>();
 		foreach (var entry in withHandlers)
 		{
 			if (entry.Handler is null) continue;

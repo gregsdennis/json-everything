@@ -18,7 +18,7 @@ public static class EvaluationResultsExtensions
 
 			if (current.Annotations is not null)
 			{
-				if (current.Annotations.TryGetPropertyValue(keyword, out var node) && node is T annotation)
+				if (current.Annotations.TryGetValue(keyword, out var node) && node is T annotation)
 					yield return annotation;
 			}
 
