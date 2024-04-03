@@ -19,7 +19,7 @@ public class PropertiesKeywordHandler : IKeywordHandler
 		var properties = instance.Join(constraints,
 			i => i.Key,
 			c => c.Key,
-			(p, c) => (Property: p, Constraint: c));
+			(i, c) => (Property: i, Constraint: c));
 
 		var results = properties.Select(x =>
 		{

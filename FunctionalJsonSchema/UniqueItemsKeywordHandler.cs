@@ -20,7 +20,6 @@ public class UniqueItemsKeywordHandler : IKeywordHandler
 		
 		if (context.LocalInstance is not JsonArray instance) return KeywordEvaluation.Skip;
 
-		return unique == true && instance.Count == instance.Distinct(JsonNodeEqualityComparer.Instance).Count();
-
+		return unique == false || instance.Count == instance.Distinct(JsonNodeEqualityComparer.Instance).Count();
 	}
 }

@@ -11,7 +11,10 @@ public static class JsonSchema
 	public static EvaluationResults Evaluate(JsonNode schema, JsonNode? instance)
 	{
 		if (schema is JsonObject objSchema && !objSchema.ContainsKey("$id"))
+		{
+			objSchema = (JsonObject)objSchema.DeepClone();
 			objSchema["$id"] = GenerateId().OriginalString;
+		}
 
 		var context = new EvaluationContext
 		{

@@ -22,9 +22,12 @@ public class UnevaluatedPropertiesKeywordHandler : IKeywordHandler
 			.Concat(patternPropertiesAnnotations)
 			.Concat(additionalPropertiesAnnotations)
 			.Concat(unevaluatedPropertiesAnnotations)
-			.ToList();
+			.SelectMany(x => x)
+			.OfType<JsonValue>()
+			.Select(x => x.GetString())
+			.ToArray();
 
-		var properties = instance.Where(x => !evaluatedProperties.Contains(x.Key, JsonNodeEqualityComparer.Instance));
+		var properties = instance.Where(x => !evaluatedProperties.Contains(x.Key));
 
 		var contextTemplate = context;
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
