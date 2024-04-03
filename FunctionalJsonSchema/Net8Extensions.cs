@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿#if NETSTANDARD2_0
+
+using System.Collections.Generic;
 
 namespace FunctionalJsonSchema;
 
@@ -9,3 +11,5 @@ public static class Net8Extensions
 		return dictionary.TryGetValue(key, out var value) ? value : default;
 	}
 }
+
+#endif

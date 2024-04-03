@@ -2,25 +2,25 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Json.More;
 
 namespace FunctionalJsonSchema;
 
-public class PropertiesKeywordHandler : IKeywordHandler
+public class PatternPropertiesKeywordHandler : IKeywordHandler
 {
-	public string Name => "properties";
+	public string Name => "patternProperties";
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
 		if (keywordValue is not JsonObject constraints)
-			throw new ArgumentException("'properties' keyword must contain an object with schema values");
+			throw new ArgumentException("'patternProperties' keyword must contain an object with schema values");
 
-		var properties = instance.Join(constraints,
-			i => i.Key,
-			c => c.Key,
-			(p, c) => (Property: p, Constraint: c));
+		var properties = instance.SelectMany(_ => constraints, (i, c) => (i, c))
+			.Where(x => Regex.IsMatch(x.i.Key, x.c.Key, RegexOptions.ECMAScript))
+			.Select(x => (Property: x.i, Constraint: x.c));
 
 		var results = properties.Select(x =>
 		{

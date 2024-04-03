@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Nodes;
+﻿using System.Collections.Generic;
+using System.Text.Json.Nodes;
 
 namespace FunctionalJsonSchema;
 
@@ -6,5 +7,5 @@ public interface IKeywordHandler
 {
 	public string Name { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context);
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations);
 }
