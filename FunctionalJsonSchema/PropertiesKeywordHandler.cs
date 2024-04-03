@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using Json.More;
@@ -15,7 +14,7 @@ public class PropertiesKeywordHandler : IKeywordHandler
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
 		if (keywordValue is not JsonObject constraints)
-			throw new ArgumentException("'properties' keyword must contain an object with schema values");
+			throw new SchemaValidationException("'properties' keyword must contain an object with schema values", context);
 
 		var properties = instance.Join(constraints,
 			i => i.Key,

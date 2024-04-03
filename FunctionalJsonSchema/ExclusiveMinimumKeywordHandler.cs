@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using Json.More;
 
@@ -11,19 +10,18 @@ public class ExclusiveMinimumKeywordHandler : IKeywordHandler
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{
-		if (keywordValue is JsonValue value)
-		{
-			var minimum = value.GetNumber();
-			if (minimum.HasValue)
-			{
-				if (context.LocalInstance is not JsonValue instance) return KeywordEvaluation.Skip;
-				var number = instance.GetNumber();
-				if (number is null) return KeywordEvaluation.Skip;
+		if (keywordValue is not JsonValue value)
+			throw new SchemaValidationException("'exclusiveMinimum' keyword must contain a number", context);
 
-				return minimum < number;
-			}
-		}
+		var minimum = value.GetNumber();
+		if (!minimum.HasValue)
+			throw new SchemaValidationException("'exclusiveMinimum' keyword must contain a number", context);
+		
+		if (context.LocalInstance is not JsonValue instance) return KeywordEvaluation.Skip;
+		var number = instance.GetNumber();
+		if (number is null) return KeywordEvaluation.Skip;
 
-		throw new ArgumentException("'exclusiveMinimum' keyword must contain a number");
+		return minimum < number;
+
 	}
 }

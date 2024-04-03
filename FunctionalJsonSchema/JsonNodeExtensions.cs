@@ -46,7 +46,7 @@ public static class JsonNodeExtensions
 			JsonValueKind.Object => _object,
 			JsonValueKind.Array => _array,
 			JsonValueKind.String => _string,
-			JsonValueKind.Number => element.TryGetInt64(out _)
+			JsonValueKind.Number => element.TryGetDecimal(out var d) && Math.Floor(d) == d
 				? _integer
 				: _number,
 			JsonValueKind.True => _boolean,

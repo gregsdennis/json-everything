@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using Json.More;
 
@@ -11,17 +10,16 @@ public class MinPropertiesKeywordHandler : IKeywordHandler
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{
-		if (keywordValue is JsonValue value)
-		{
-			var minimum = value.GetNumber();
-			if (minimum.HasValue)
-			{
-				if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
+		if (keywordValue is not JsonValue value)
+			throw new SchemaValidationException("'minProperties' keyword must contain a number", context);
+		
+		var minimum = value.GetNumber();
+		if (!minimum.HasValue)
+			throw new SchemaValidationException("'minProperties' keyword must contain a number", context);
+		
+		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
-				return minimum <= instance.Count;
-			}
-		}
+		return minimum <= instance.Count;
 
-		throw new ArgumentException("'minProperties' keyword must contain a number");
 	}
 }

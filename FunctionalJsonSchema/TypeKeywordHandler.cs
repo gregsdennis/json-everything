@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using Json.More;
@@ -13,19 +12,14 @@ public class TypeKeywordHandler : IKeywordHandler
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{
 		var instanceType = context.LocalInstance.GetSchemaValueType();
-		if (keywordValue is JsonValue value)
+		return keywordValue switch
 		{
-			// still need keyword validation
-			return new KeywordEvaluation
-			{
-				Valid = value.IsEquivalentTo(instanceType)
-			};
-		}
-		if (keywordValue is JsonArray multipleTypes)
-		{
-			return multipleTypes.Any(x => x.IsEquivalentTo(instanceType));
-		}
-
-		throw new ArgumentException("'type' keyword must contain a valid JSON Schema type or an array of valid JSON Schema types");
+			// TODO: keyword validation
+			JsonValue value => value.IsEquivalentTo(instanceType) ||
+			                   (instanceType.IsEquivalentTo("integer") && value.IsEquivalentTo("number")),
+			JsonArray multipleTypes => multipleTypes.Contains(instanceType, JsonNodeEqualityComparer.Instance) ||
+			                           (instanceType.IsEquivalentTo("integer") && multipleTypes.Contains("number")),
+			_ => throw new SchemaValidationException("'type' keyword must contain a valid JSON Schema type or an array of valid JSON Schema types", context)
+		};
 	}
 }

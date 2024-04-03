@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
@@ -16,7 +15,7 @@ public class PatternPropertiesKeywordHandler : IKeywordHandler
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
 		if (keywordValue is not JsonObject constraints)
-			throw new ArgumentException("'patternProperties' keyword must contain an object with schema values");
+			throw new SchemaValidationException("'patternProperties' keyword must contain an object with schema values", context);
 
 		var properties = instance.SelectMany(_ => constraints, (i, c) => (i, c))
 			.Where(x => Regex.IsMatch(x.i.Key, x.c.Key, RegexOptions.ECMAScript))

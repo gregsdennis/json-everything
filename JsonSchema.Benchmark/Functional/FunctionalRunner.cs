@@ -8,10 +8,25 @@ namespace Json.Schema.Benchmark.Functional;
 [MemoryDiagnoser]
 public class FunctionalRunner
 {
-	private static readonly JsonNode _instance = new JsonObject
-	{
-		["foo"] = "value"
-	};
+	private const string _schemaText =
+		"""
+		{
+		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "properties": {
+		    "foo": {},
+		    "bar": {}
+		  },
+		  "patternProperties": {
+		    "^v": {}
+		  },
+		  "additionalProperties": false
+		}
+		""";
+
+	private static readonly JsonNode _instance = JsonNode.Parse(
+		"""
+		{"foo":1,"vroom":2}
+		""")!;
 
 	[Params(1,100)]
 	public int Count { get; set; }
@@ -21,15 +36,7 @@ public class FunctionalRunner
 	{
 		for (int i = 0; i < Count; i++)
 		{
-			var schema = JsonSchema.FromText(
-				"""
-				{
-				  "type": "object",
-				  "properties": {
-				    "foo": { "type": "string" }
-				  }
-				}
-				""");
+			var schema = JsonSchema.FromText(_schemaText);
 
 			_ = schema.Evaluate(_instance);
 		}
@@ -40,15 +47,7 @@ public class FunctionalRunner
 	[Benchmark]
 	public int OOP_Reuse()
 	{
-		var schema = JsonSchema.FromText(
-			"""
-			{
-			  "type": "object",
-			  "properties": {
-			    "foo": { "type": "string" }
-			  }
-			}
-			""");
+		var schema = JsonSchema.FromText(_schemaText);
 
 		for (int i = 0; i < Count; i++)
 		{
@@ -63,15 +62,7 @@ public class FunctionalRunner
 	{
 		for (int i = 0; i < Count; i++)
 		{
-			var schema = JsonNode.Parse(
-				"""
-				{
-				  "type": "object",
-				  "properties": {
-				    "foo": { "type": "string" }
-				  }
-				}
-				""")!;
+			var schema = JsonNode.Parse(_schemaText)!;
 
 			_ = FJsonSchema.Evaluate(schema, _instance);
 		}
@@ -82,15 +73,7 @@ public class FunctionalRunner
 	[Benchmark]
 	public int Functional_Reuse()
 	{
-		var schema = JsonNode.Parse(
-			"""
-			{
-			  "type": "object",
-			  "properties": {
-			    "foo": { "type": "string" }
-			  }
-			}
-			""")!;
+		var schema = JsonNode.Parse(_schemaText)!;
 
 		for (int i = 0; i < Count; i++)
 		{
