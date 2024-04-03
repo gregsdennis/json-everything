@@ -43,7 +43,7 @@ public static class KeywordRegistry
 			.Select(x => x.Value)
 			.ToList();
 
-		var priority = 0;
+		var priority = 1; // 0 for unhandled keywords (annotations)
 		while (allKeywords.Count != 0)
 		{
 			var priorityKeywords = allKeywords

@@ -60,10 +60,14 @@ public struct EvaluationContext
 		var annotations = new Dictionary<string, JsonNode?>();
 		foreach (var entry in withHandlers)
 		{
-			if (entry.Handler is null) continue;
-
 			var keywordContext = this;
-			var keywordResult = entry.Handler.Handle(entry.Keyword.Value, keywordContext, evaluations);
+			var keywordResult = entry.Handler?.Handle(entry.Keyword.Value, keywordContext, evaluations) ??
+			                    new KeywordEvaluation
+			                    {
+									Valid = true,
+									Annotation = entry.Keyword.Value,
+									HasAnnotation = true
+			                    };
 			valid &= keywordResult.Valid;
 			keywordResult.Key = entry.Keyword.Key;
 			evaluations.Add(keywordResult);
