@@ -7,6 +7,7 @@ namespace FunctionalJsonSchema;
 public class OneOfKeywordHandler : IKeywordHandler
 {
 	public string Name => "oneOf";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
 	{

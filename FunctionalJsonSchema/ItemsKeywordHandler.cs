@@ -8,6 +8,7 @@ namespace FunctionalJsonSchema;
 public class ItemsKeywordHandler : IKeywordHandler
 {
 	public string Name => "items";
+	public string[]? Dependencies { get; } = ["prefixItems"];
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
 	{

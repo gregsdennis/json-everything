@@ -8,6 +8,7 @@ namespace FunctionalJsonSchema;
 public class EnumKeywordHandler : IKeywordHandler
 {
 	public string Name => "enum";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{

@@ -7,6 +7,7 @@ namespace FunctionalJsonSchema;
 public class ExclusiveMinimumKeywordHandler : IKeywordHandler
 {
 	public string Name => "exclusiveMinimum";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{

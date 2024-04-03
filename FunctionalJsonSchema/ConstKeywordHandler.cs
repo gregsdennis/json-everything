@@ -7,6 +7,7 @@ namespace FunctionalJsonSchema;
 public class ConstKeywordHandler : IKeywordHandler
 {
 	public string Name => "const";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{

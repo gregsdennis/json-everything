@@ -8,6 +8,7 @@ namespace FunctionalJsonSchema;
 public class UnevaluatedPropertiesKeywordHandler : IKeywordHandler
 {
 	public string Name => "unevaluatedProperties";
+	public string[]? Dependencies { get; } = ["properties", "patternProperties", "additionalProperties", "unevaluatedProperties"];
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
 	{

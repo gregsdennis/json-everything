@@ -7,6 +7,7 @@ namespace FunctionalJsonSchema;
 public class MultipleOfKeywordHandler : IKeywordHandler
 {
 	public string Name => "multipleOf";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
 	{

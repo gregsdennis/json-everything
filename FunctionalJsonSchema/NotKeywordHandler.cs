@@ -6,6 +6,7 @@ namespace FunctionalJsonSchema;
 public class NotKeywordHandler : IKeywordHandler
 {
 	public string Name => "not";
+	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
 	{
