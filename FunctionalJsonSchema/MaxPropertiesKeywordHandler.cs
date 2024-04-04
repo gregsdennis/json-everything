@@ -10,7 +10,7 @@ public class MaxPropertiesKeywordHandler : IKeywordHandler
 	public string Name => "maxProperties";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is JsonValue value)
 		{
@@ -25,4 +25,6 @@ public class MaxPropertiesKeywordHandler : IKeywordHandler
 
 		throw new ArgumentException("'maxProperties' keyword must contain a number");
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

@@ -9,7 +9,7 @@ public class MultipleOfKeywordHandler : IKeywordHandler
 	public string Name => "multipleOf";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'multipleOf' keyword must contain a number", context);
@@ -25,4 +25,6 @@ public class MultipleOfKeywordHandler : IKeywordHandler
 		return number % divisor == 0;
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

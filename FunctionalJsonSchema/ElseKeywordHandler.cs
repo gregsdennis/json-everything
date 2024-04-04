@@ -9,7 +9,7 @@ public class ElseKeywordHandler : IKeywordHandler
 	public string Name => "else";
 	public string[]? Dependencies { get; } = ["if"];
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		var ifEvaluation = evaluations.FirstOrDefault(x => x.Key == "if");
 		if (ifEvaluation is null || ifEvaluation.Children[0].Valid) return KeywordEvaluation.Skip;
@@ -26,4 +26,6 @@ public class ElseKeywordHandler : IKeywordHandler
 			Children = [result]
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

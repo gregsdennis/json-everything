@@ -9,7 +9,7 @@ public class PrefixItemsKeywordHandler : IKeywordHandler
 	public string Name => "prefixItems";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonArray instance) return KeywordEvaluation.Skip;
 
@@ -32,9 +32,11 @@ public class PrefixItemsKeywordHandler : IKeywordHandler
 		return new KeywordEvaluation
 		{
 			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = instance.Count == results.Length ? true : results.Max(x => x.Index),
+			Annotation = results.Any() ? results.Max(x => x.Index) : -1,
 			HasAnnotation = results.Any(),
 			Children = results.Select(x => x.Evaluation).ToArray()
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonArray a ? [.. a] : [];
 }

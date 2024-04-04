@@ -9,7 +9,7 @@ public class OneOfKeywordHandler : IKeywordHandler
 	public string Name => "oneOf";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (keywordValue is not JsonArray constraints)
 			throw new SchemaValidationException("'oneOf' keyword must contain an array of schemas", context);
@@ -29,4 +29,6 @@ public class OneOfKeywordHandler : IKeywordHandler
 			Children = [.. results]
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonArray a ? [.. a] : [];
 }

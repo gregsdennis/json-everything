@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using Json.More;
@@ -11,7 +10,7 @@ public class AdditionalPropertiesKeywordHandler : IKeywordHandler
 	public string Name => "additionalProperties";
 	public string[]? Dependencies { get; } = ["properties", "patternProperties"];
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
@@ -49,4 +48,6 @@ public class AdditionalPropertiesKeywordHandler : IKeywordHandler
 			Children = results.Select(x => x.Evaluation).ToArray()
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

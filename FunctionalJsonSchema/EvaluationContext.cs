@@ -14,6 +14,9 @@ public struct EvaluationContext
 	public JsonPointer InstanceLocation { get; set; }
 	public JsonPointer EvaluationPath { get; set; }
 	public JsonNode? LocalInstance { get; set; }
+	public EvaluationOptions Options { get; set; }
+
+	internal Uri? RefUri { get; set; }
 
 	public EvaluationResults Evaluate(JsonNode? localSchema)
 	{
@@ -43,17 +46,21 @@ public struct EvaluationContext
 			var id = (idNode as JsonValue)?.GetString();
 			if (!Uri.TryCreate(id, UriKind.RelativeOrAbsolute, out baseUri))
 				throw new ArgumentException("$id must be a valid URI");
-			if (!string.IsNullOrEmpty(baseUri.Fragment))
+			if (baseUri.IsAbsoluteUri && !string.IsNullOrEmpty(baseUri.Fragment))
 				throw new ArgumentException("$id must not contain a fragment");
-			if (!baseUri.IsAbsoluteUri)
+			if (!baseUri.IsAbsoluteUri && BaseUri is null)
 				baseUri = new Uri(JsonSchema.DefaultBaseUri, baseUri);
 		}
 
 		if (baseUri is not null)
 		{
-			BaseUri = baseUri;
+			BaseUri = BaseUri is null
+				? baseUri
+				: new Uri(BaseUri, baseUri);
 			SchemaLocation = JsonPointer.Empty;
 		}
+		else if (RefUri is not null)
+			BaseUri = RefUri;
 
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();
@@ -85,5 +92,4 @@ public struct EvaluationContext
 			Annotations = valid && annotations.Any() ? annotations : null
 		};
 	}
-
 }

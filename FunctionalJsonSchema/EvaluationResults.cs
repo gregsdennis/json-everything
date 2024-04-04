@@ -20,5 +20,5 @@ public class EvaluationResults
 	public EvaluationResults[]? Details { get; set; }
 	[JsonPropertyName("annotations")]
 	[JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
-	public Dictionary<string, JsonNode?>? Annotations { get; set; }
+	public IReadOnlyDictionary<string, JsonNode?>? Annotations { get; set; }
 }

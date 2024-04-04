@@ -10,7 +10,7 @@ public class UniqueItemsKeywordHandler : IKeywordHandler
 	public string Name => "uniqueItems";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'uniqueItems' keyword must contain a number", context);
@@ -23,4 +23,6 @@ public class UniqueItemsKeywordHandler : IKeywordHandler
 
 		return unique == false || instance.Count == instance.Distinct(JsonNodeEqualityComparer.Instance).Count();
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

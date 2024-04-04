@@ -8,7 +8,7 @@ public class MinContainsKeywordHandler : IKeywordHandler
 	public string Name => "minContains";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		return new KeywordEvaluation
 		{
@@ -17,4 +17,6 @@ public class MinContainsKeywordHandler : IKeywordHandler
 			HasAnnotation = true
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

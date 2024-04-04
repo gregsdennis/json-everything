@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json.Nodes;
-using Json.More;
 
 namespace FunctionalJsonSchema;
 
-public class ConstKeywordHandler : IKeywordHandler
+public class DefsKeywordHandler : IKeywordHandler
 {
-	public string Name => "const";
+	public string Name => "$defs";
 	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
-		return context.LocalInstance.IsEquivalentTo(keywordValue);
+		return KeywordEvaluation.Skip;
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonObject a ? [.. a.Select(x => x.Value)] : [];
 }

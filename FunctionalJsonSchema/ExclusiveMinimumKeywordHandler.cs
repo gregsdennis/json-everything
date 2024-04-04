@@ -9,7 +9,7 @@ public class ExclusiveMinimumKeywordHandler : IKeywordHandler
 	public string Name => "exclusiveMinimum";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'exclusiveMinimum' keyword must contain a number", context);
@@ -25,4 +25,6 @@ public class ExclusiveMinimumKeywordHandler : IKeywordHandler
 		return minimum < number;
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

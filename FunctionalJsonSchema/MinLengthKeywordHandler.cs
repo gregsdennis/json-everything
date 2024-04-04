@@ -10,7 +10,7 @@ public class MinLengthKeywordHandler : IKeywordHandler
 	public string Name => "minLength";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'minLength' keyword must contain a number", context);
@@ -27,4 +27,6 @@ public class MinLengthKeywordHandler : IKeywordHandler
 		return minimum <= length;
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

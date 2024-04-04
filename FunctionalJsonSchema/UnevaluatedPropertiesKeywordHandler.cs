@@ -10,7 +10,7 @@ public class UnevaluatedPropertiesKeywordHandler : IKeywordHandler
 	public string Name => "unevaluatedProperties";
 	public string[]? Dependencies { get; } = ["properties", "patternProperties", "additionalProperties", "unevaluatedProperties"];
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
@@ -51,4 +51,6 @@ public class UnevaluatedPropertiesKeywordHandler : IKeywordHandler
 			Children = results.Select(x => x.Evaluation).ToArray()
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

@@ -9,7 +9,7 @@ public class PropertyNamesKeywordHandler : IKeywordHandler
 	public string Name => "propertyNames";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
@@ -32,4 +32,6 @@ public class PropertyNamesKeywordHandler : IKeywordHandler
 			Children = [.. results]
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

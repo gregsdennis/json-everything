@@ -8,12 +8,19 @@ public static class JsonSchema
 {
 	public static Uri DefaultBaseUri { get; set; } = new("https://json-everything.net/");
 
-	public static EvaluationResults Evaluate(JsonNode schema, JsonNode? instance)
+	public static EvaluationResults Evaluate(JsonNode schema, JsonNode? instance, EvaluationOptions? options = null)
 	{
-		if (schema is JsonObject objSchema && !objSchema.ContainsKey("$id"))
+		options ??= EvaluationOptions.Default;
+
+		if (schema is JsonObject objSchema)
 		{
-			objSchema = (JsonObject)objSchema.DeepClone();
-			objSchema["$id"] = GenerateId().OriginalString;
+			if (objSchema.ContainsKey("$id"))
+				options.SchemaRegistry.Register(objSchema);
+			else
+			{
+				schema = objSchema = (JsonObject)objSchema.DeepClone();
+				objSchema["$id"] = options.SchemaRegistry.Register(objSchema).OriginalString;
+			}
 		}
 
 		var context = new EvaluationContext
@@ -21,7 +28,8 @@ public static class JsonSchema
 			SchemaLocation = JsonPointer.Empty,
 			InstanceLocation = JsonPointer.Empty,
 			EvaluationPath = JsonPointer.Empty,
-			LocalInstance = instance
+			LocalInstance = instance,
+			Options = options
 		};
 
 		return context.Evaluate(schema);

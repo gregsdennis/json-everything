@@ -10,7 +10,7 @@ public class ContainsKeywordHandler : IKeywordHandler
 	public string Name => "contains";
 	public string[]? Dependencies { get; } = ["minContains", "maxContains"];
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonArray instance) return KeywordEvaluation.Skip;
 
@@ -42,9 +42,11 @@ public class ContainsKeywordHandler : IKeywordHandler
 		return new KeywordEvaluation
 		{
 			Valid = minContains <= validIndices.Count && validIndices.Count <= maxContains,
-			Annotation = validIndices.Count == instance.Count ? true : validIndices,
+			Annotation = validIndices,
 			HasAnnotation = validIndices.Any(),
 			Children = results.Select(x => x.Evaluation).ToArray()
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

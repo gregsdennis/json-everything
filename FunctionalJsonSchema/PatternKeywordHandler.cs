@@ -10,7 +10,7 @@ public class PatternKeywordHandler : IKeywordHandler
 	public string Name => "pattern";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'maxLength' keyword must contain a string", context);
@@ -26,4 +26,6 @@ public class PatternKeywordHandler : IKeywordHandler
 		return Regex.IsMatch(str, pattern);
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

@@ -10,7 +10,7 @@ public class TypeKeywordHandler : IKeywordHandler
 	public string Name => "type";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		var instanceType = context.LocalInstance.GetSchemaValueType();
 		return keywordValue switch
@@ -23,4 +23,6 @@ public class TypeKeywordHandler : IKeywordHandler
 			_ => throw new SchemaValidationException("'type' keyword must contain a valid JSON Schema type or an array of valid JSON Schema types", context)
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

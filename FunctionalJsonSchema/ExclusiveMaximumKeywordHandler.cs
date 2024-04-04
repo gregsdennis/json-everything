@@ -9,7 +9,7 @@ public class ExclusiveMaximumKeywordHandler : IKeywordHandler
 	public string Name => "exclusiveMaximum";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'exclusiveMaximum' keyword must contain a number", context);
@@ -25,4 +25,6 @@ public class ExclusiveMaximumKeywordHandler : IKeywordHandler
 		return maximum > number;
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

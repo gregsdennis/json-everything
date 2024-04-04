@@ -66,23 +66,23 @@ public class Validation
 		return allTests;
 	}
 
-	//[OneTimeSetUp]
-	//public void LoadRemoteSchemas()
-	//{
-	//	// ReSharper disable once HeuristicUnreachableCode
-	//	var remotesPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, _useExternal ? _externalRemoteSchemasPath : _remoteSchemasPath)
-	//		.AdjustForPlatform();
-	//	if (!Directory.Exists(remotesPath)) throw new Exception("Cannot find remotes folder");
+	[OneTimeSetUp]
+	public void LoadRemoteSchemas()
+	{
+		// ReSharper disable once HeuristicUnreachableCode
+		var remotesPath = Path.Combine(TestContext.CurrentContext.WorkDirectory, _useExternal ? _externalRemoteSchemasPath : _remoteSchemasPath)
+			.AdjustForPlatform();
+		if (!Directory.Exists(remotesPath)) throw new Exception("Cannot find remotes folder");
 
-	//	var fileNames = Directory.GetFiles(remotesPath, "*.json", SearchOption.AllDirectories);
+		var fileNames = Directory.GetFiles(remotesPath, "*.json", SearchOption.AllDirectories);
 
-	//	foreach (var fileName in fileNames)
-	//	{
-	//		var schema = JsonSchema.FromFile(fileName);
-	//		var uri = new Uri(fileName.Replace(remotesPath, "http://localhost:1234").Replace('\\', '/'));
-	//		SchemaRegistry.Global.Register(uri, schema);
-	//	}
-	//}
+		foreach (var fileName in fileNames)
+		{
+			var schema = (JsonObject)JsonNode.Parse(File.ReadAllText(fileName))!;
+			var uri = new Uri(fileName.Replace(remotesPath, "http://localhost:1234").Replace('\\', '/'));
+			EvaluationOptions.Default.SchemaRegistry.Register(uri, schema);
+		}
+	}
 
 	[TestCaseSource(nameof(TestCases))]
 	public void Test(TestCollection collection, TestCase test, string fileName)

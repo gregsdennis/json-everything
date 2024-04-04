@@ -30,6 +30,8 @@ public static class KeywordRegistry
 			.OrderBy(x => _keywordPriorities.GetValueOrDefault(x.Keyword.Key));
 	}
 
+	public static IKeywordHandler? Get(string name) => _handlers.GetValueOrDefault(name);
+
 	private static void UpdatePriorities()
 	{
 		_keywordPriorities.Clear();

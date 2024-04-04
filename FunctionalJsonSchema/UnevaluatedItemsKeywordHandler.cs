@@ -8,9 +8,9 @@ namespace FunctionalJsonSchema;
 public class UnevaluatedItemsKeywordHandler : IKeywordHandler
 {
 	public string Name => "unevaluatedItems";
-	public string[]? Dependencies { get; } = ["prefixItems", "items", "unevaluatedItems"];
+	public string[]? Dependencies { get; } = ["contains", "prefixItems", "items", "unevaluatedItems"];
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		if (context.LocalInstance is not JsonArray instance) return KeywordEvaluation.Skip;
 
@@ -19,15 +19,20 @@ public class UnevaluatedItemsKeywordHandler : IKeywordHandler
 			.Concat(evaluations.GetAllAnnotations<JsonValue>("unevaluatedItems"))
 			.ToArray();
 
-		if (indexAnnotations.Any(x => x.GetBool() == true)) return KeywordEvaluation.Skip;
+		var containsIndices = evaluations.GetAllAnnotations<JsonArray>("contains")
+			.SelectMany(x => x.Select(y => (y as JsonValue)?.GetInteger()))
+			.Where(x => x is not null)
+			.ToArray();
 
-		var skip = indexAnnotations.Any() ? indexAnnotations.Max(x => (int?)x.GetInteger() ?? 0) : 0;
+		var skip = indexAnnotations.Any() ? indexAnnotations.Max(x => (int?)x.GetInteger() ?? 0) + 1 : 0;
 
 		var contextTemplate = context;
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = instance.Skip(skip).Select((x, i) =>
+		var results = instance.Skip(skip)
+			.Where((_, i) => !containsIndices.Contains(i + skip))
+			.Select((x, i) =>
 		{
 			var localContext = contextTemplate;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(skip + i);
@@ -39,9 +44,11 @@ public class UnevaluatedItemsKeywordHandler : IKeywordHandler
 		return new KeywordEvaluation
 		{
 			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = instance.Count == results.Length + skip ? true : results.Max(x => x.Index),
+			Annotation = results.Any() ? results.Max(x => x.Index) : -1,
 			HasAnnotation = results.Any(),
 			Children = results.Select(x => x.Evaluation).ToArray()
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

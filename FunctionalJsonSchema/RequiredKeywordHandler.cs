@@ -10,7 +10,7 @@ public class RequiredKeywordHandler : IKeywordHandler
 	public string Name => "required";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonArray value)
 			throw new SchemaValidationException("'required' keyword must contain an array of strings", context);
@@ -24,4 +24,6 @@ public class RequiredKeywordHandler : IKeywordHandler
 		return required.All(x => instance.ContainsKey(x!));
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

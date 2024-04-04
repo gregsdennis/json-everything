@@ -8,7 +8,7 @@ public class IfKeywordHandler : IKeywordHandler
 	public string Name => "if";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> evaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		var localContext = context;
 		localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name);
@@ -22,4 +22,6 @@ public class IfKeywordHandler : IKeywordHandler
 			Children = [result]
 		};
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

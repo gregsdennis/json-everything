@@ -9,7 +9,7 @@ public class MinItemsKeywordHandler : IKeywordHandler
 	public string Name => "minItems";
 	public string[]? Dependencies { get; }
 
-	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyList<KeywordEvaluation> siblingEvaluations)
+	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonValue value)
 			throw new SchemaValidationException("'minItems' keyword must contain a number", context);
@@ -23,4 +23,6 @@ public class MinItemsKeywordHandler : IKeywordHandler
 		return minimum <= instance.Count;
 
 	}
+
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }
