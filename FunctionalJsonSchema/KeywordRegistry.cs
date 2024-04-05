@@ -14,6 +14,7 @@ public static class KeywordRegistry
 	{
 		_handlers = new IKeywordHandler[]
 		{
+			AdditionalItemsKeywordHandler.Instance,
 			AdditionalPropertiesKeywordHandler.Instance,
 			AllOfKeywordHandler.Instance,
 			AnchorKeywordHandler.Instance,
@@ -25,6 +26,7 @@ public static class KeywordRegistry
 			ContentMediaTypeKeywordHandler.Instance,
 			ContentSchemaKeywordHandler.Instance,
 			DefaultKeywordHandler.Instance,
+			DefinitionsKeywordHandler.Instance,
 			DefsKeywordHandler.Instance,
 			DependentRequiredKeywordHandler.Instance,
 			DependentSchemasKeywordHandler.Instance,
@@ -39,14 +41,16 @@ public static class KeywordRegistry
 			FormatKeywordHandler.Annotate,
 			IdKeywordHandler.Instance,
 			IfKeywordHandler.Instance,
-			ItemsKeywordHandler.Instance,
+			ItemsKeywordHandler.AllowArrays,
 			MaxContainsKeywordHandler.Instance,
 			MaximumKeywordHandler.Instance,
 			MaxItemsKeywordHandler.Instance,
+			MaxLengthKeywordHandler.Instance,
 			MaxPropertiesKeywordHandler.Instance,
 			MinContainsKeywordHandler.Instance,
 			MinimumKeywordHandler.Instance,
 			MinItemsKeywordHandler.Instance,
+			MinLengthKeywordHandler.Instance,
 			MinPropertiesKeywordHandler.Instance,
 			MultipleOfKeywordHandler.Instance,
 			NotKeywordHandler.Instance,

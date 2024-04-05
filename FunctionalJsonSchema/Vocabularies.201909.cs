@@ -20,8 +20,8 @@ public static partial class Vocabularies
 	public static readonly Vocabulary Applicator201909 =
 		new(new Uri("https://json-schema.org/draft/2019-09/vocab/applicator"),
 			MetaSchemas.Applicator201909,
-			PrefixItemsKeywordHandler.Instance,
-			ItemsKeywordHandler.Instance,
+			ItemsKeywordHandler.AllowArrays,
+			AdditionalItemsKeywordHandler.Instance,
 			ContainsKeywordHandler.Instance,
 			AdditionalPropertiesKeywordHandler.Instance,
 			PropertiesKeywordHandler.Instance,

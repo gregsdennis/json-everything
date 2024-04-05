@@ -21,7 +21,7 @@ public static partial class Vocabularies
 		new(new Uri("https://json-schema.org/draft/2020-12/vocab/applicator"),
 			MetaSchemas.Applicator202012,
 			PrefixItemsKeywordHandler.Instance,
-			ItemsKeywordHandler.Instance,
+			ItemsKeywordHandler.OnlySingle,
 			ContainsKeywordHandler.Instance,
 			AdditionalPropertiesKeywordHandler.Instance,
 			PropertiesKeywordHandler.Instance,

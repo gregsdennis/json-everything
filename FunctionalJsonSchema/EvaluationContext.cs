@@ -52,8 +52,8 @@ public struct EvaluationContext
 			var id = (idNode as JsonValue)?.GetString();
 			if (!Uri.TryCreate(id, UriKind.RelativeOrAbsolute, out baseUri))
 				throw new SchemaValidationException("$id must be a valid URI", this);
-			if (baseUri.IsAbsoluteUri && !string.IsNullOrEmpty(baseUri.Fragment))
-				throw new SchemaValidationException("$id must not contain a fragment", this);
+			//if (baseUri.IsAbsoluteUri && !string.IsNullOrEmpty(baseUri.Fragment))
+			//	throw new SchemaValidationException("$id must not contain a fragment", this);
 			if (!baseUri.IsAbsoluteUri && BaseUri is null)
 				baseUri = new Uri(JsonSchema.DefaultBaseUri, baseUri);
 		}
@@ -78,6 +78,7 @@ public struct EvaluationContext
 			var metaSchemaId = (schemaNode as JsonValue)?.GetString();
 			if (metaSchemaId is null || !Uri.TryCreate(metaSchemaId, UriKind.Absolute, out var metaSchemaUri))
 				throw new SchemaValidationException("$schema must be a valid URI", this);
+
 			var metaSchema = Options.SchemaRegistry.Get(metaSchemaUri);
 			if (metaSchema.TryGetValue("$vocabulary", out var vocabNode, out _))
 			{
