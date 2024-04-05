@@ -1,6 +1,7 @@
 ﻿using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Json.More;
 
 namespace FunctionalJsonSchema.Tests.Suite;
@@ -102,7 +103,19 @@ public class Validation
 		if (!InstanceIsDeserializable(test.Data))
 			Assert.Inconclusive("Instance not deserializable");
 
-		var result = JsonSchema.Evaluate(collection.Schema!, test.Data);
+		EvaluationResults result;
+		try
+		{
+			result = JsonSchema.Evaluate(collection.Schema!, test.Data);
+		}
+		catch (RegexParseException e)
+		{
+			Console.WriteLine(e);
+			if (collection.IsOptional)
+				Assert.Inconclusive("Test optional");
+
+			throw;
+		}
 		//result.ToBasic();
 		Console.WriteLine(JsonSerializer.Serialize(result, TestFileSerializationOptions));
 

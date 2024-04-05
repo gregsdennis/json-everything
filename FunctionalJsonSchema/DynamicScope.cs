@@ -14,15 +14,9 @@ public class DynamicScope : IEnumerable<Uri>, IEquatable<DynamicScope>
 	/// </summary>
 	public Uri LocalScope => _scope.Count == 0 ? null! : _scope.Peek();
 
-	internal DynamicScope(Uri initialScope)
+	internal DynamicScope()
 	{
 		_scope = new Stack<Uri>();
-		_scope.Push(initialScope);
-	}
-
-	internal DynamicScope(DynamicScope other)
-	{
-		_scope = new Stack<Uri>(other.Reverse());
 	}
 
 	internal void Push(Uri newLocal)

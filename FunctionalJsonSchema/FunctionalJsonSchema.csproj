@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="..\Meta-Schemas\**\*.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\JsonPointer\JsonPointer.csproj" />
   </ItemGroup>
 

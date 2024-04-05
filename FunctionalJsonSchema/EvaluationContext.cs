@@ -15,8 +15,14 @@ public struct EvaluationContext
 	public JsonPointer EvaluationPath { get; set; }
 	public JsonNode? LocalInstance { get; set; }
 	public EvaluationOptions Options { get; set; }
+	public DynamicScope DynamicScope { get; }
 
 	internal Uri? RefUri { get; set; }
+
+	public EvaluationContext()
+	{
+		DynamicScope = new();
+	}
 
 	public EvaluationResults Evaluate(JsonNode? localSchema)
 	{
@@ -29,7 +35,6 @@ public struct EvaluationContext
 			return new EvaluationResults
 			{
 				Valid = boolSchema.Value,
-				SchemaLocation = SchemaLocation,
 				InstanceLocation = InstanceLocation,
 				EvaluationPath = EvaluationPath
 			};
@@ -39,6 +44,8 @@ public struct EvaluationContext
 			throw new ArgumentException("Schema must be an object or a boolean");
 
 		var withHandlers = KeywordRegistry.GetHandlers(objSchema);
+
+		var currentBaseUri = BaseUri;
 
 		Uri? baseUri = null;
 		if (objSchema.TryGetValue("$id", out var idNode, out _))
@@ -62,6 +69,9 @@ public struct EvaluationContext
 		else if (RefUri is not null)
 			BaseUri = RefUri;
 
+		if (currentBaseUri != BaseUri) 
+			DynamicScope.Push(BaseUri!);
+
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();
 		var annotations = new Dictionary<string, JsonNode?>();
@@ -76,16 +86,22 @@ public struct EvaluationContext
 									HasAnnotation = true
 			                    };
 			valid &= keywordResult.Valid;
-			keywordResult.Key = entry.Keyword.Key;
+			if (!ReferenceEquals(keywordResult, KeywordEvaluation.Skip))
+				keywordResult.Key = entry.Keyword.Key;
 			evaluations.Add(keywordResult);
 			if (keywordResult.HasAnnotation)
 				annotations[entry.Keyword.Key] = keywordResult.Annotation;
 		}
 
+		if (currentBaseUri != BaseUri)
+			DynamicScope.Pop();
+
 		return new EvaluationResults
 		{
 			Valid = valid,
-			SchemaLocation = SchemaLocation,
+			SchemaLocation = SchemaLocation.Segments.Any() 
+				? new Uri(BaseUri!, SchemaLocation.ToString(JsonPointerStyle.UriEncoded))
+				: BaseUri!,
 			InstanceLocation = InstanceLocation,
 			EvaluationPath = EvaluationPath,
 			Details = evaluations.Any() ? evaluations.SelectMany(x => x.Children).ToArray() : null,

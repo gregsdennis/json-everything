@@ -15,7 +15,12 @@ public class SchemaRegistry
 		public Dictionary<string, JsonObject> DynamicAnchors { get; } = [];
 	}
 
-	private readonly Dictionary<Uri, Registration> _registry = new();
+	private readonly Dictionary<Uri, Registration> _registry;
+
+	internal SchemaRegistry(SchemaRegistry? other)
+	{
+		_registry = new(other?._registry ?? []);
+	}
 
 	public Uri Register(JsonObject schema)
 	{
@@ -45,19 +50,38 @@ public class SchemaRegistry
 		}
 	}
 
-	public JsonObject Get(Uri baseUri, string? anchor = null, bool isDynamic = false)
+	public JsonObject Get(Uri baseUri, string? anchor = null)
 	{
-		if (!_registry.TryGetValue(baseUri, out var registration))
-			throw new RefResolutionException(baseUri);
+		return GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
+	}
+
+	public (JsonObject, Uri) Get(DynamicScope scope, Uri baseUri, string anchor)
+	{
+		var registration = _registry[baseUri];
+		if (!registration.DynamicAnchors.ContainsKey(anchor))
+		{
+			var target = GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
+			return (target, baseUri);
+		}
+
+		foreach (var uri in scope.Reverse())
+		{
+			var target = GetAnchor(uri, anchor, true);
+			if (target is not null) return (target, uri);
+		}
+
+		throw new RefResolutionException(scope.LocalScope, anchor, true);
+	}
+
+	private JsonObject? GetAnchor(Uri baseUri, string? anchor, bool isDynamic)
+	{
+		if (!_registry.TryGetValue(baseUri, out var registration)) return null;
 
 		if (anchor is null) return registration.Root;
 
 		var anchorList = isDynamic ? registration.DynamicAnchors : registration.Anchors;
 
-		if (!anchorList.TryGetValue(anchor, out var target))
-			throw new RefResolutionException(baseUri, anchor, isDynamic);
-
-		return target;
+		return anchorList.GetValueOrDefault(anchor);
 	}
 
 	private static Uri GenerateId() => new(JsonSchema.DefaultBaseUri, Guid.NewGuid().ToString("N")[..10]);
@@ -83,16 +107,16 @@ public class SchemaRegistry
 					Root = currentSchema
 				};
 
-			var anchor = (currentSchema["$anchor"] as JsonValue)?.GetString();
-			if (anchor is not null)
-				registration.Anchors[anchor] = currentSchema;
-
 			var dynamicAnchor = (currentSchema["$dynamicAnchor"] as JsonValue)?.GetString();
 			if (dynamicAnchor is not null)
 			{
 				registration.Anchors[dynamicAnchor] = currentSchema;
 				registration.DynamicAnchors[dynamicAnchor] = currentSchema;
 			}
+
+			var anchor = (currentSchema["$anchor"] as JsonValue)?.GetString();
+			if (anchor is not null)
+				registration.Anchors[anchor] = currentSchema;
 
 			foreach (var kvp in currentSchema)
 			{
