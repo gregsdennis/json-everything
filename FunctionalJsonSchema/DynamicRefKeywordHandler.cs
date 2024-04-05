@@ -11,8 +11,12 @@ public class DynamicRefKeywordHandler : IKeywordHandler
 {
 	private static readonly Regex _anchorPattern202012 = new("^[A-Za-z_][-A-Za-z0-9._]*$");
 
+	public static DynamicRefKeywordHandler Instance { get; } = new();
+
 	public string Name => "$dynamicRef";
 	public string[]? Dependencies { get; }
+
+	private DynamicRefKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

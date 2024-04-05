@@ -1,6 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
 
@@ -8,6 +6,14 @@ namespace FunctionalJsonSchema;
 
 public static class MetaSchemas
 {
+	public static readonly JsonObject Applicator201909;
+	public static readonly JsonObject Content201909;
+	public static readonly JsonObject Core201909;
+	public static readonly JsonObject Format201909;
+	public static readonly JsonObject Metadata201909;
+	public static readonly JsonObject Draft201909;
+	public static readonly JsonObject Validation201909;
+
 	public static readonly JsonObject Applicator202012;
 	public static readonly JsonObject Content202012;
 	public static readonly JsonObject Core202012;
@@ -18,17 +24,28 @@ public static class MetaSchemas
 	public static readonly JsonObject Unevaluated202012;
 	public static readonly JsonObject Validation202012;
 
+	public static readonly JsonObject ApplicatorNext;
+	public static readonly JsonObject ContentNext;
+	public static readonly JsonObject CoreNext;
+	public static readonly JsonObject FormatAnnotationNext;
+	public static readonly JsonObject FormatAssertionNext;
+	public static readonly JsonObject MetadataNext;
+	public static readonly JsonObject DraftNext;
+	public static readonly JsonObject UnevaluatedNext;
+	public static readonly JsonObject ValidationNext;
+
 	internal static SchemaRegistry Registry { get; } = new(null);
 
 	static MetaSchemas()
 	{
-		Register("FunctionalJsonSchema._2019_09.applicator.json");
-		Register("FunctionalJsonSchema._2019_09.content.json");
-		Register("FunctionalJsonSchema._2019_09.core.json");
-		Register("FunctionalJsonSchema._2019_09.format.json");
-		Register("FunctionalJsonSchema._2019_09.meta-data.json");
-		Register("FunctionalJsonSchema._2019_09.schema.json");
-		Register("FunctionalJsonSchema._2019_09.validation.json");
+		Applicator201909 = Register("FunctionalJsonSchema._2019_09.applicator.json");
+		Content201909 = Register("FunctionalJsonSchema._2019_09.content.json");
+		Core201909 = Register("FunctionalJsonSchema._2019_09.core.json");
+		Format201909 = Register("FunctionalJsonSchema._2019_09.format.json");
+		Metadata201909 = Register("FunctionalJsonSchema._2019_09.meta-data.json");
+		Draft201909 = Register("FunctionalJsonSchema._2019_09.schema.json");
+		Validation201909 = Register("FunctionalJsonSchema._2019_09.validation.json");
+
 		Applicator202012 = Register("FunctionalJsonSchema._2020_12.applicator.json");
 		Content202012 = Register("FunctionalJsonSchema._2020_12.content.json");
 		Core202012 = Register("FunctionalJsonSchema._2020_12.core.json");
@@ -38,19 +55,23 @@ public static class MetaSchemas
 		Draft202012 = Register("FunctionalJsonSchema._2020_12.schema.json");
 		Unevaluated202012 = Register("FunctionalJsonSchema._2020_12.unevaluated.json");
 		Validation202012 = Register("FunctionalJsonSchema._2020_12.validation.json");
-		Register("FunctionalJsonSchema.Next.applicator.json");
-		Register("FunctionalJsonSchema.Next.content.json");
-		Register("FunctionalJsonSchema.Next.core.json");
-		Register("FunctionalJsonSchema.Next.format-annotation.json");
-		Register("FunctionalJsonSchema.Next.format-assertion.json");
-		Register("FunctionalJsonSchema.Next.meta-data.json");
-		Register("FunctionalJsonSchema.Next.schema.json");
-		Register("FunctionalJsonSchema.Next.unevaluated.json");
-		Register("FunctionalJsonSchema.Next.validation.json");
+
+		ApplicatorNext = Register("FunctionalJsonSchema.Next.applicator.json");
+		ContentNext = Register("FunctionalJsonSchema.Next.content.json");
+		CoreNext = Register("FunctionalJsonSchema.Next.core.json");
+		FormatAnnotationNext = Register("FunctionalJsonSchema.Next.format-annotation.json");
+		FormatAssertionNext = Register("FunctionalJsonSchema.Next.format-assertion.json");
+		MetadataNext = Register("FunctionalJsonSchema.Next.meta-data.json");
+		DraftNext = Register("FunctionalJsonSchema.Next.schema.json");
+		UnevaluatedNext = Register("FunctionalJsonSchema.Next.unevaluated.json");
+		ValidationNext = Register("FunctionalJsonSchema.Next.validation.json");
+
 		Register("FunctionalJsonSchema.OpenAPI._3._1.openapi-dialect-base.json");
 		Register("FunctionalJsonSchema.OpenAPI._3._1.openapi-meta-base.json");
 		Register("FunctionalJsonSchema.OpenAPI._3._1.schema.json");
+		
 		Register("FunctionalJsonSchema.schema06.json");
+		
 		Register("FunctionalJsonSchema.schema07.json");
 	}
 

@@ -9,13 +9,14 @@ namespace FunctionalJsonSchema;
 
 public struct EvaluationContext
 {
-	public Uri BaseUri { get; set; }
+	public Uri BaseUri { get; private set; }
 	public JsonPointer SchemaLocation { get; set; }
 	public JsonPointer InstanceLocation { get; set; }
 	public JsonPointer EvaluationPath { get; set; }
 	public JsonNode? LocalInstance { get; set; }
-	public EvaluationOptions Options { get; set; }
+	public EvaluationOptions Options { get; internal set; }
 	public DynamicScope DynamicScope { get; }
+	public Vocabulary[] Vocabularies { get; private set; }
 
 	internal Uri? RefUri { get; set; }
 
@@ -30,7 +31,7 @@ public struct EvaluationContext
 		{
 			var boolSchema = value.GetBool();
 			if (!boolSchema.HasValue)
-				throw new ArgumentException("Schema must be an object or a boolean");
+				throw new SchemaValidationException("Schema must be an object or a boolean", this);
 
 			return new EvaluationResults
 			{
@@ -41,9 +42,7 @@ public struct EvaluationContext
 		}
 
 		if (localSchema is not JsonObject objSchema)
-			throw new ArgumentException("Schema must be an object or a boolean");
-
-		var withHandlers = KeywordRegistry.GetHandlers(objSchema);
+			throw new SchemaValidationException("Schema must be an object or a boolean", this);
 
 		var currentBaseUri = BaseUri;
 
@@ -52,9 +51,9 @@ public struct EvaluationContext
 		{
 			var id = (idNode as JsonValue)?.GetString();
 			if (!Uri.TryCreate(id, UriKind.RelativeOrAbsolute, out baseUri))
-				throw new ArgumentException("$id must be a valid URI");
+				throw new SchemaValidationException("$id must be a valid URI", this);
 			if (baseUri.IsAbsoluteUri && !string.IsNullOrEmpty(baseUri.Fragment))
-				throw new ArgumentException("$id must not contain a fragment");
+				throw new SchemaValidationException("$id must not contain a fragment", this);
 			if (!baseUri.IsAbsoluteUri && BaseUri is null)
 				baseUri = new Uri(JsonSchema.DefaultBaseUri, baseUri);
 		}
@@ -66,11 +65,37 @@ public struct EvaluationContext
 				: new Uri(BaseUri, baseUri);
 			SchemaLocation = JsonPointer.Empty;
 		}
-		else if (RefUri is not null)
+		if (RefUri is not null)
 			BaseUri = RefUri;
 
 		if (currentBaseUri != BaseUri) 
 			DynamicScope.Push(BaseUri!);
+
+		Vocabulary[] vocabs = [];
+		var resourceRoot = Options.SchemaRegistry.Get(BaseUri!);
+		if (resourceRoot.TryGetValue("$schema", out var schemaNode, out _))
+		{
+			var metaSchemaId = (schemaNode as JsonValue)?.GetString();
+			if (metaSchemaId is null || !Uri.TryCreate(metaSchemaId, UriKind.Absolute, out var metaSchemaUri))
+				throw new SchemaValidationException("$schema must be a valid URI", this);
+			var metaSchema = Options.SchemaRegistry.Get(metaSchemaUri);
+			if (metaSchema.TryGetValue("$vocabulary", out var vocabNode, out _))
+			{
+				if (vocabNode is not JsonObject vocabObject)
+					throw new SchemaValidationException("$vocabulary must be an object", this);
+				var vocabIds = vocabObject.ToDictionary(x => new Uri(x.Key, UriKind.Absolute), x => (x.Value as JsonValue)?.GetBool());
+				if (vocabIds.Any(x => x.Value is null))
+					throw new SchemaValidationException("$vocabulary values must be booleans", this);
+				vocabs = vocabIds
+					.Select(x => x.Value == true
+						? FunctionalJsonSchema.Vocabularies.Get(x.Key)
+						: FunctionalJsonSchema.Vocabularies.TryGet(x.Key))
+					.Where(x => x is not null)
+					.ToArray()!;
+			}
+		}
+
+		var withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabs);
 
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();

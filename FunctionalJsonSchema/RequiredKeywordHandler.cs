@@ -7,8 +7,12 @@ namespace FunctionalJsonSchema;
 
 public class RequiredKeywordHandler : IKeywordHandler
 {
+	public static RequiredKeywordHandler Instance { get; } = new();
+
 	public string Name => "required";
 	public string[]? Dependencies { get; }
+
+	private RequiredKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

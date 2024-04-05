@@ -5,6 +5,7 @@ namespace FunctionalJsonSchema;
 public class KeywordEvaluation
 {
 	public static KeywordEvaluation Skip { get; } = new() { Valid = true };
+	public static KeywordEvaluation Annotate { get; } = new() { Valid = true };
 
 	public string Key { get; internal set; }
 	public bool Valid { get; set; }

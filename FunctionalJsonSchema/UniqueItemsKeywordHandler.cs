@@ -7,8 +7,12 @@ namespace FunctionalJsonSchema;
 
 public class UniqueItemsKeywordHandler : IKeywordHandler
 {
+	public static UniqueItemsKeywordHandler Instance { get; } = new();
+
 	public string Name => "uniqueItems";
 	public string[]? Dependencies { get; }
+
+	private UniqueItemsKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

@@ -7,8 +7,12 @@ namespace FunctionalJsonSchema;
 
 public class ContainsKeywordHandler : IKeywordHandler
 {
+	public static ContainsKeywordHandler Instance { get; } = new();
+
 	public string Name => "contains";
 	public string[]? Dependencies { get; } = ["minContains", "maxContains"];
+
+	private ContainsKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

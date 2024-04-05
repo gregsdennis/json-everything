@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class MinimumKeywordHandler : IKeywordHandler
 {
+	public static MinimumKeywordHandler Instance { get; } = new();
+
 	public string Name => "minimum";
 	public string[]? Dependencies { get; }
+
+	private MinimumKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

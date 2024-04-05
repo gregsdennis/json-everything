@@ -25,12 +25,11 @@ public class Validation
 
 	public static IEnumerable<TestCaseData> TestCases()
 	{
-		return GetTests("draft2020-12");
-		//return GetTests("draft6")
-		//	.Concat(GetTests("draft7"))
-		//	.Concat(GetTests("draft2019-09"))
-		//	.Concat(GetTests("draft2020-12"))
-		//	.Concat(_runDraftNext ? GetTests("draft-next") : Enumerable.Empty<TestCaseData>());
+		return GetTests("draft6")
+			.Concat(GetTests("draft7"))
+			.Concat(GetTests("draft2019-09"))
+			.Concat(GetTests("draft2020-12"))
+			.Concat(_runDraftNext ? GetTests("draft-next") : Enumerable.Empty<TestCaseData>());
 	}
 
 	private static IEnumerable<TestCaseData> GetTests(string draftFolder)

@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class ElseKeywordHandler : IKeywordHandler
 {
+	public static ElseKeywordHandler Instance { get; } = new();
+
 	public string Name => "else";
 	public string[]? Dependencies { get; } = ["if"];
+
+	private ElseKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

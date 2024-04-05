@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class MaxItemsKeywordHandler : IKeywordHandler
 {
+	public static MaxItemsKeywordHandler Instance { get; } = new();
+
 	public string Name => "maxItems";
 	public string[]? Dependencies { get; }
+
+	private MaxItemsKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

@@ -9,10 +9,14 @@ namespace FunctionalJsonSchema;
 
 public class RefKeywordHandler : IKeywordHandler
 {
+	public static RefKeywordHandler Instance { get; } = new();
+
 	private static readonly Regex _anchorPattern202012 = new("^[A-Za-z_][-A-Za-z0-9._]*$");
 
 	public string Name => "$ref";
 	public string[]? Dependencies { get; }
+
+	private RefKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

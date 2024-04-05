@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class DefsKeywordHandler : IKeywordHandler
 {
+	public static DefsKeywordHandler Instance { get; } = new();
+
 	public string Name => "$defs";
 	public string[]? Dependencies { get; }
+
+	private DefsKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

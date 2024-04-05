@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class ThenKeywordHandler : IKeywordHandler
 {
+	public static ThenKeywordHandler Instance { get; } = new();
+
 	public string Name => "then";
 	public string[]? Dependencies { get; } = ["if"];
+
+	private ThenKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

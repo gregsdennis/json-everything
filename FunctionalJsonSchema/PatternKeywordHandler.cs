@@ -7,8 +7,12 @@ namespace FunctionalJsonSchema;
 
 public class PatternKeywordHandler : IKeywordHandler
 {
+	public static PatternKeywordHandler Instance { get; } = new();
+
 	public string Name => "pattern";
 	public string[]? Dependencies { get; }
+
+	private PatternKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

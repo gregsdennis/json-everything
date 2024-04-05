@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class PrefixItemsKeywordHandler : IKeywordHandler
 {
+	public static PrefixItemsKeywordHandler Instance { get; } = new();
+
 	public string Name => "prefixItems";
 	public string[]? Dependencies { get; }
+
+	private PrefixItemsKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

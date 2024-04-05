@@ -6,8 +6,12 @@ namespace FunctionalJsonSchema;
 
 public class AnyOfKeywordHandler : IKeywordHandler
 {
+	public static AnyOfKeywordHandler Instance { get; } = new();
+
 	public string Name => "anyOf";
 	public string[]? Dependencies { get; }
+
+	private AnyOfKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

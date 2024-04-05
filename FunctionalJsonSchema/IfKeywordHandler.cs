@@ -5,8 +5,12 @@ namespace FunctionalJsonSchema;
 
 public class IfKeywordHandler : IKeywordHandler
 {
+	public static IfKeywordHandler Instance { get; } = new();
+
 	public string Name => "if";
 	public string[]? Dependencies { get; }
+
+	private IfKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{

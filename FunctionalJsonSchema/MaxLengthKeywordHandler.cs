@@ -7,8 +7,12 @@ namespace FunctionalJsonSchema;
 
 public class MaxLengthKeywordHandler : IKeywordHandler
 {
+	public static MaxLengthKeywordHandler Instance { get; } = new();
+
 	public string Name => "maxLength";
 	public string[]? Dependencies { get; }
+
+	private MaxLengthKeywordHandler() { }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{

@@ -28,7 +28,7 @@ public class FunctionalRunner
 		{"foo":1,"vroom":2}
 		""")!;
 
-	[Params(1,100,1000)]
+	[Params(1,10)]
 	public int Count { get; set; }
 
 	[Benchmark]

@@ -12,25 +12,97 @@ public static class KeywordRegistry
 
 	static KeywordRegistry()
 	{
-		_handlers = typeof(IKeywordHandler)
-			.Assembly
-			.DefinedTypes
-			.Where(x => typeof(IKeywordHandler).IsAssignableFrom(x) && !x.IsAbstract)
-			.Select(x => (IKeywordHandler)Activator.CreateInstance(x))
-			.ToDictionary(x => x.Name);
+		_handlers = new IKeywordHandler[]
+		{
+			AdditionalPropertiesKeywordHandler.Instance,
+			AllOfKeywordHandler.Instance,
+			AnchorKeywordHandler.Instance,
+			AnyOfKeywordHandler.Instance,
+			CommentKeywordHandler.Instance,
+			ConstKeywordHandler.Instance,
+			ContainsKeywordHandler.Instance,
+			ContentEncodingKeywordHandler.Instance,
+			ContentMediaTypeKeywordHandler.Instance,
+			ContentSchemaKeywordHandler.Instance,
+			DefaultKeywordHandler.Instance,
+			DefsKeywordHandler.Instance,
+			DependentRequiredKeywordHandler.Instance,
+			DependentSchemasKeywordHandler.Instance,
+			DescriptionKeywordHandler.Instance,
+			DynamicAnchorKeywordHandler.Instance,
+			DynamicRefKeywordHandler.Instance,
+			ElseKeywordHandler.Instance,
+			EnumKeywordHandler.Instance,
+			ExamplesKeywordHandler.Instance,
+			ExclusiveMaximumKeywordHandler.Instance,
+			ExclusiveMinimumKeywordHandler.Instance,
+			FormatKeywordHandler.Annotate,
+			IdKeywordHandler.Instance,
+			IfKeywordHandler.Instance,
+			ItemsKeywordHandler.Instance,
+			MaxContainsKeywordHandler.Instance,
+			MaximumKeywordHandler.Instance,
+			MaxItemsKeywordHandler.Instance,
+			MaxPropertiesKeywordHandler.Instance,
+			MinContainsKeywordHandler.Instance,
+			MinimumKeywordHandler.Instance,
+			MinItemsKeywordHandler.Instance,
+			MinPropertiesKeywordHandler.Instance,
+			MultipleOfKeywordHandler.Instance,
+			NotKeywordHandler.Instance,
+			OneOfKeywordHandler.Instance,
+			PatternKeywordHandler.Instance,
+			PatternPropertiesKeywordHandler.Instance,
+			PrefixItemsKeywordHandler.Instance,
+			PropertiesKeywordHandler.Instance,
+			PropertyNamesKeywordHandler.Instance,
+			ReadOnlyKeywordHandler.Instance,
+			RefKeywordHandler.Instance,
+			RequiredKeywordHandler.Instance,
+			SchemaKeywordHandler.Instance,
+			ThenKeywordHandler.Instance,
+			TitleKeywordHandler.Instance,
+			TypeKeywordHandler.Instance,
+			UnevaluatedItemsKeywordHandler.Instance,
+			UnevaluatedPropertiesKeywordHandler.Instance,
+			UniqueItemsKeywordHandler.Instance,
+			VocabularyKeywordHandler.Instance,
+			WriteOnlyKeywordHandler.Instance
+		}.ToDictionary(x => x.Name);
 
 		_keywordPriorities = [];
 		UpdatePriorities();
 	}
 
-	public static IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> GetHandlers(JsonObject schema)
+	public static IKeywordHandler? Get(string name) => _handlers.GetValueOrDefault(name);
+
+	public static void Register(IKeywordHandler handler)
 	{
-		return schema
-			.Select(kvp => (Keyword: kvp, Handler: _handlers.GetValueOrDefault(kvp.Key)))
-			.OrderBy(x => _keywordPriorities.GetValueOrDefault(x.Keyword.Key));
+		_handlers[handler.Name] = handler;
+		UpdatePriorities();
 	}
 
-	public static IKeywordHandler? Get(string name) => _handlers.GetValueOrDefault(name);
+	internal static void Register(Vocabulary[] vocabularies)
+	{
+		var handlers = vocabularies.SelectMany(x => x.Handlers);
+		foreach (var handler in handlers)
+		{
+			_handlers[handler.Name] = handler;
+		}
+		UpdatePriorities();
+	}
+
+	internal static IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> GetHandlers(JsonObject schema, Vocabulary[] vocabs)
+	{
+		var pairs = vocabs.Length != 0
+			? schema.Join(vocabs.SelectMany(x => x.Handlers),
+				s => s.Key,
+				h => h.Name,
+				(s, h) => (Keyword: s, Handler: h))!
+			: schema.Select(kvp => (Keyword: kvp, Handler: _handlers.GetValueOrDefault(kvp.Key)));
+
+		return pairs.OrderBy(x => _keywordPriorities.GetValueOrDefault(x.Keyword.Key));
+	}
 
 	private static void UpdatePriorities()
 	{
@@ -40,8 +112,9 @@ public static class KeywordRegistry
 		_keywordPriorities["$id"] = -1;
 		_keywordPriorities["unevaluatedItems"] = int.MaxValue;
 		_keywordPriorities["unevaluatedProperties"] = int.MaxValue;
+
 		var allKeywords = _handlers
-			.Where(x => !_keywordPriorities.Keys.Contains(x.Key))
+			.Where(x => !_keywordPriorities.ContainsKey(x.Key))
 			.Select(x => x.Value)
 			.ToList();
 
