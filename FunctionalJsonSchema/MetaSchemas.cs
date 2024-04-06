@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
 
@@ -6,6 +7,13 @@ namespace FunctionalJsonSchema;
 
 public static class MetaSchemas
 {
+	public static readonly Uri Draft6Id = new("http://json-schema.org/draft-06/schema#");
+	public static readonly JsonObject Draft6;
+
+	public static readonly Uri Draft7Id = new("http://json-schema.org/draft-07/schema#");
+	public static readonly JsonObject Draft7;
+
+	public static readonly Uri Draft201909Id = new("https://json-schema.org/draft/2019-09/schema");
 	public static readonly JsonObject Applicator201909;
 	public static readonly JsonObject Content201909;
 	public static readonly JsonObject Core201909;
@@ -14,6 +22,7 @@ public static class MetaSchemas
 	public static readonly JsonObject Draft201909;
 	public static readonly JsonObject Validation201909;
 
+	public static readonly Uri Draft202012Id = new("https://json-schema.org/draft/2020-12/schema");
 	public static readonly JsonObject Applicator202012;
 	public static readonly JsonObject Content202012;
 	public static readonly JsonObject Core202012;
@@ -24,6 +33,7 @@ public static class MetaSchemas
 	public static readonly JsonObject Unevaluated202012;
 	public static readonly JsonObject Validation202012;
 
+	public static readonly Uri DraftNextId = new("https://json-schema.org/draft/next/schema");
 	public static readonly JsonObject ApplicatorNext;
 	public static readonly JsonObject ContentNext;
 	public static readonly JsonObject CoreNext;
@@ -34,10 +44,12 @@ public static class MetaSchemas
 	public static readonly JsonObject UnevaluatedNext;
 	public static readonly JsonObject ValidationNext;
 
-	internal static SchemaRegistry Registry { get; } = new(null);
-
 	static MetaSchemas()
 	{
+		Draft6 = Register("FunctionalJsonSchema.schema06.json");
+
+		Draft7 = Register("FunctionalJsonSchema.schema07.json");
+
 		Applicator201909 = Register("FunctionalJsonSchema._2019_09.applicator.json");
 		Content201909 = Register("FunctionalJsonSchema._2019_09.content.json");
 		Core201909 = Register("FunctionalJsonSchema._2019_09.core.json");
@@ -65,20 +77,12 @@ public static class MetaSchemas
 		DraftNext = Register("FunctionalJsonSchema.Next.schema.json");
 		UnevaluatedNext = Register("FunctionalJsonSchema.Next.unevaluated.json");
 		ValidationNext = Register("FunctionalJsonSchema.Next.validation.json");
-
-		Register("FunctionalJsonSchema.OpenAPI._3._1.openapi-dialect-base.json");
-		Register("FunctionalJsonSchema.OpenAPI._3._1.openapi-meta-base.json");
-		Register("FunctionalJsonSchema.OpenAPI._3._1.schema.json");
-		
-		Register("FunctionalJsonSchema.schema06.json");
-		
-		Register("FunctionalJsonSchema.schema07.json");
 	}
 
 	private static JsonObject Register(string resourceName)
 	{
 		var schema = Load(resourceName);
-		Registry.Register(schema);
+		SchemaRegistry.Global.Register(schema);
 
 		return schema;
 	}

@@ -19,9 +19,11 @@ public class SchemaRegistry
 	private readonly Dictionary<Uri, Registration> _registry;
 	private readonly Dictionary<JsonObject, Uri> _reverseLookup;
 
-	internal SchemaRegistry(SchemaRegistry? other)
+	public static SchemaRegistry Global { get; } = new();
+
+	internal SchemaRegistry()
 	{
-		_registry = new(other?._registry ?? []);
+		_registry = [];
 		_reverseLookup = [];
 	}
 
@@ -61,14 +63,17 @@ public class SchemaRegistry
 
 	internal Uri? GetUri(JsonObject schema)
 	{
-		return _reverseLookup.GetValueOrDefault(schema);
+		return _reverseLookup.GetValueOrDefault(schema) ??
+		       Global._reverseLookup.GetValueOrDefault(schema);
 	}
 
 	internal (JsonObject, Uri) Get(DynamicScope scope, Uri baseUri, string anchor, bool requireLocalAnchor)
 	{
 		if (requireLocalAnchor)
 		{
-			var registration = _registry[baseUri];
+			var registration = _registry.GetValueOrDefault(baseUri) ?? Global._registry.GetValueOrDefault(baseUri);
+			if (registration == null)
+				throw new InvalidOperationException($"Could not find '{baseUri}'. This shouldn't happen.");
 			if (!registration.DynamicAnchors.ContainsKey(anchor))
 			{
 				var target = GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
@@ -90,7 +95,9 @@ public class SchemaRegistry
 		(JsonObject, Uri)? resolved = null;
 		foreach (var uri in scope)
 		{
-			var registration = _registry[uri];
+			var registration = _registry.GetValueOrDefault(uri) ?? Global._registry.GetValueOrDefault(uri);
+			if (registration == null)
+				throw new InvalidOperationException($"Could not find '{uri}'. This shouldn't happen.");
 			if (registration.RecursiveAnchor is null)
 				return resolved ?? (registration.Root, uri);
 
@@ -103,7 +110,13 @@ public class SchemaRegistry
 
 	private JsonObject? GetAnchor(Uri baseUri, string? anchor, bool isDynamic)
 	{
-		if (!_registry.TryGetValue(baseUri, out var registration)) return null;
+		return GetAnchorFromRegistry(_registry, baseUri, anchor, isDynamic) ??
+		       GetAnchorFromRegistry(Global._registry, baseUri, anchor, isDynamic);
+	}
+
+	private static JsonObject? GetAnchorFromRegistry(Dictionary<Uri, Registration> registry, Uri baseUri, string? anchor, bool isDynamic)
+	{
+		if (!registry.TryGetValue(baseUri, out var registration)) return null;
 
 		if (anchor is null) return registration.Root;
 

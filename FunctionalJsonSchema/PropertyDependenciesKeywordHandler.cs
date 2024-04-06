@@ -28,7 +28,7 @@ public class PropertyDependenciesKeywordHandler : IKeywordHandler
 			.Select(x =>
 			{
 				var propertyValue = (x.Property.Value as JsonValue)?.GetString();
-				if (propertyValue is null) return (Property: x.Property.Key, Value: null, Schema: null);
+				if (propertyValue is null) return (Property: x.Property.Key, Value: null!, Schema: null);
 
 				if (x.Dependencies is not JsonObject dependencies)
 					throw new SchemaValidationException("'propertyDependencies' keyword must contain an object of objects", context);
@@ -58,5 +58,8 @@ public class PropertyDependenciesKeywordHandler : IKeywordHandler
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonObject a ? [.. a.Select(x => x.Value)] : [];
+	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) =>
+		keywordValue is JsonObject a
+			? [.. a.SelectMany(x => (x.Value as JsonObject)?.Select(y => y.Value) ?? [])]
+			: [];
 }

@@ -136,7 +136,7 @@ public static class KeywordRegistry
 
 			// without this, we loop forever
 			if (!priorityKeywords.Any())
-				throw new Exception($"Could not find handlers for: {string.Join(", ", allKeywords.SelectMany(x => x.Dependencies).Except(_keywordPriorities.Keys))}");
+				throw new Exception($"Could not find handlers for: {string.Join(", ", allKeywords.SelectMany(x => x.Dependencies ?? []).Except(_keywordPriorities.Keys))}");
 
 			foreach (var keyword in priorityKeywords)
 			{

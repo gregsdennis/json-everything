@@ -14,15 +14,18 @@ public struct EvaluationContext
 	public JsonPointer InstanceLocation { get; set; }
 	public JsonPointer EvaluationPath { get; set; }
 	public JsonNode? LocalInstance { get; set; }
-	public EvaluationOptions Options { get; internal set; }
+	public EvaluationOptions Options { get; internal init; }
 	public DynamicScope DynamicScope { get; }
 
 	internal Uri? RefUri { get; set; }
+	internal Uri EvaluatingAs { get; set; }
 
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public EvaluationContext()
 	{
 		DynamicScope = new();
 	}
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
 	public EvaluationResults Evaluate(JsonNode? localSchema)
 	{
@@ -52,34 +55,45 @@ public struct EvaluationContext
 			BaseUri = RefUri;
 
 		if (currentBaseUri != BaseUri) 
-			DynamicScope.Push(BaseUri!);
+			DynamicScope.Push(BaseUri);
 
+		EvaluatingAs ??= Options.DefaultMetaSchema;
 		Vocabulary[] vocabs = [];
-		var resourceRoot = Options.SchemaRegistry.Get(BaseUri!);
+		var resourceRoot = Options.SchemaRegistry.Get(BaseUri);
 		if (resourceRoot.TryGetValue("$schema", out var schemaNode, out _))
 		{
 			var metaSchemaId = (schemaNode as JsonValue)?.GetString();
 			if (metaSchemaId is null || !Uri.TryCreate(metaSchemaId, UriKind.Absolute, out var metaSchemaUri))
 				throw new SchemaValidationException("$schema must be a valid URI", this);
 
-			var metaSchema = Options.SchemaRegistry.Get(metaSchemaUri);
-			if (metaSchema.TryGetValue("$vocabulary", out var vocabNode, out _))
-			{
-				if (vocabNode is not JsonObject vocabObject)
-					throw new SchemaValidationException("$vocabulary must be an object", this);
-				var vocabIds = vocabObject.ToDictionary(x => new Uri(x.Key, UriKind.Absolute), x => (x.Value as JsonValue)?.GetBool());
-				if (vocabIds.Any(x => x.Value is null))
-					throw new SchemaValidationException("$vocabulary values must be booleans", this);
-				vocabs = vocabIds
-					.Select(x => x.Value == true
-						? Vocabularies.Get(x.Key)
-						: Vocabularies.TryGet(x.Key))
-					.Where(x => x is not null)
-					.ToArray()!;
-			}
+			EvaluatingAs = metaSchemaUri;
 		}
 
-		var withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabs);
+		var metaSchema = Options.SchemaRegistry.Get(EvaluatingAs);
+		if (metaSchema.TryGetValue("$vocabulary", out var vocabNode, out _))
+		{
+			// TODO: cache this
+			if (vocabNode is not JsonObject vocabObject)
+				throw new SchemaValidationException("$vocabulary must be an object", this);
+
+			var vocabIds = vocabObject.ToDictionary(x => new Uri(x.Key, UriKind.Absolute), x => (x.Value as JsonValue)?.GetBool());
+			if (vocabIds.Any(x => x.Value is null))
+				throw new SchemaValidationException("$vocabulary values must be booleans", this);
+
+			vocabs = vocabIds
+				.Select(x => x.Value == true
+					? Vocabularies.Get(x.Key)
+					: Vocabularies.TryGet(x.Key))
+				.Where(x => x is not null)
+				.ToArray()!;
+		}
+
+		IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> withHandlers;
+		if (objSchema.ContainsKey("$ref") &&
+		    (EvaluatingAs == MetaSchemas.Draft6Id || EvaluatingAs == MetaSchemas.Draft7Id))
+			withHandlers = [(objSchema.Single(x => x.Key == "$ref"), RefKeywordHandler.Instance)];
+		else
+			withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabs);
 
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();

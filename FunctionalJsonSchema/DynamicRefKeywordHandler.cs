@@ -38,7 +38,7 @@ public class DynamicRefKeywordHandler : IKeywordHandler
 		var newBaseUri = new Uri(newUri.GetLeftPart(UriPartial.Query));
 
 		JsonNode? target;
-		if (JsonPointer.TryParse(fragment, out var pointer))
+		if (_requireLocalAnchor && JsonPointer.TryParse(fragment, out var pointer))
 		{
 			var targetBase = context.Options.SchemaRegistry.Get(newBaseUri);
 			if (!pointer.TryEvaluate(targetBase, out target))

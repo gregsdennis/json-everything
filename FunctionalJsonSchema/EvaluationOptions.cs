@@ -1,10 +1,14 @@
-﻿namespace FunctionalJsonSchema;
+﻿using System;
+
+namespace FunctionalJsonSchema;
 
 public class EvaluationOptions
 {
-	public static EvaluationOptions Default { get; } = new();
+	public static EvaluationOptions Default { get; } = new() { SchemaRegistry = SchemaRegistry.Global };
 
 	public bool RequireFormatValidation { get; set; }
 
-	public SchemaRegistry SchemaRegistry { get; } = new(MetaSchemas.Registry);
+	public Uri DefaultMetaSchema { get; set; } = MetaSchemas.Draft202012Id;
+
+	public SchemaRegistry SchemaRegistry { get; private init; } = new();
 }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Json.More;
+#pragma warning disable NUnit2005
 
 namespace FunctionalJsonSchema.Tests.Suite;
 
@@ -16,7 +17,7 @@ public class Validation
 	private const string _externalTestCasesPath = @"../../../../../JSON-Schema-Test-Suite/tests";
 	private const string _externalRemoteSchemasPath = @"../../../../../JSON-Schema-Test-Suite/remotes";
 
-	private static readonly JsonSerializerOptions TestFileSerializationOptions = new()
+	private static readonly JsonSerializerOptions _testFileSerializationOptions = new()
 	{
 		WriteIndented = true,
 		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
@@ -48,8 +49,23 @@ public class Validation
 		{
 			var shortFileName = Path.GetFileNameWithoutExtension(fileName);
 
+			// adjust for format
+			var options = new EvaluationOptions();
+			options.DefaultMetaSchema = draftFolder switch
+			{
+				"draft6" => MetaSchemas.Draft6Id,
+				"draft7" => MetaSchemas.Draft7Id,
+				"draft2019-09" => MetaSchemas.Draft201909Id,
+				"draft2020-12" => MetaSchemas.Draft202012Id,
+				"draft-next" => MetaSchemas.DraftNextId,
+				_ => options.DefaultMetaSchema
+			};
+			options.RequireFormatValidation = fileName.Contains("format/".AdjustForPlatform()) &&
+			                                  // uri-template will throw an exception as it's explicitly unsupported
+			                                  shortFileName != "uri-template";
+
 			var contents = File.ReadAllText(fileName);
-			var collections = JsonSerializer.Deserialize<List<TestCollection>>(contents, TestFileSerializationOptions);
+			var collections = JsonSerializer.Deserialize<List<TestCollection>>(contents, _testFileSerializationOptions);
 
 			foreach (var collection in collections!)
 			{
@@ -58,7 +74,7 @@ public class Validation
 				{
 					var optional = collection.IsOptional ? "(optional) / " : null;
 					var name = $"{draftFolder} / {shortFileName} / {optional}{collection.Description} / {test.Description}";
-					allTests.Add(new TestCaseData(collection, test, shortFileName) { TestName = name });
+					allTests.Add(new TestCaseData(collection, test, shortFileName, options) { TestName = name });
 				}
 			}
 		}
@@ -85,7 +101,7 @@ public class Validation
 	}
 
 	[TestCaseSource(nameof(TestCases))]
-	public void Test(TestCollection collection, TestCase test, string fileName)
+	public void Test(TestCollection collection, TestCase test, string fileName, EvaluationOptions options)
 	{
 		Console.WriteLine();
 		Console.WriteLine();
@@ -94,7 +110,7 @@ public class Validation
 		Console.WriteLine(test.Description);
 		Console.WriteLine(test.Valid ? "valid" : "invalid");
 		Console.WriteLine();
-		Console.WriteLine(JsonSerializer.Serialize(collection.Schema, TestFileSerializationOptions));
+		Console.WriteLine(JsonSerializer.Serialize(collection.Schema, _testFileSerializationOptions));
 		Console.WriteLine();
 		Console.WriteLine(test.Data.AsJsonString());
 		Console.WriteLine();
@@ -105,7 +121,7 @@ public class Validation
 		EvaluationResults result;
 		try
 		{
-			result = JsonSchema.Evaluate(collection.Schema!, test.Data);
+			result = JsonSchema.Evaluate(collection.Schema!, test.Data, options);
 		}
 		catch (RegexParseException e)
 		{
@@ -116,7 +132,7 @@ public class Validation
 			throw;
 		}
 		//result.ToBasic();
-		Console.WriteLine(JsonSerializer.Serialize(result, TestFileSerializationOptions));
+		Console.WriteLine(JsonSerializer.Serialize(result, _testFileSerializationOptions));
 
 		if (collection.IsOptional && result.Valid != test.Valid)
 			Assert.Inconclusive("Test optional");

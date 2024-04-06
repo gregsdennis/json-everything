@@ -7,7 +7,7 @@ public class KeywordEvaluation
 	public static KeywordEvaluation Skip { get; } = new() { Valid = true };
 	public static KeywordEvaluation Annotate { get; } = new() { Valid = true };
 
-	public string Key { get; internal set; }
+	public string Key { get; internal set; } = null!; // this is always set by the context
 	public bool Valid { get; set; }
 	public EvaluationResults[] Children { get; set; } = [];
 	public bool HasAnnotation { get; set; }
