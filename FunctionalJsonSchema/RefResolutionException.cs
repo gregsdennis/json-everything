@@ -20,7 +20,7 @@ public class RefResolutionException : Exception
 	}
 
 	public RefResolutionException(Uri baseUri, JsonPointer location)
-		: base($"Could not resolve schema '{baseUri}{location.ToString(JsonPointerStyle.UriEncoded)}'")
+		: base($"Could not resolve schema '{baseUri}#{location}'")
 	{
 		BaseUri = baseUri;
 		Location = location;

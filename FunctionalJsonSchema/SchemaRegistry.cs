@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Json.More;
 
 namespace FunctionalJsonSchema;
@@ -12,9 +13,13 @@ public class SchemaRegistry
 	{
 		public required JsonObject Root { get; init; }
 		public Dictionary<string, JsonObject> Anchors { get; } = [];
+		public Dictionary<string, JsonObject> LegacyAnchors { get; } = [];
 		public Dictionary<string, JsonObject> DynamicAnchors { get; } = [];
 		public JsonObject? RecursiveAnchor { get; set; }
 	}
+
+	internal static readonly Regex AnchorPattern201909 = new("^[A-Za-z][-A-Za-z0-9.:_]*$");
+	internal static readonly Regex AnchorPattern202012 = new("^[A-Za-z_][-A-Za-z0-9._]*$");
 
 	private readonly Dictionary<Uri, Registration> _registry;
 	private readonly Dictionary<JsonObject, Uri> _reverseLookup;
@@ -56,9 +61,9 @@ public class SchemaRegistry
 		}
 	}
 
-	internal JsonObject Get(Uri baseUri, string? anchor = null)
+	internal JsonObject Get(Uri baseUri, string? anchor = null, bool allowLegacy = false)
 	{
-		return GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
+		return GetAnchor(baseUri, anchor, false, allowLegacy) ?? throw new RefResolutionException(baseUri, anchor);
 	}
 
 	internal Uri? GetUri(JsonObject schema)
@@ -76,14 +81,14 @@ public class SchemaRegistry
 				throw new InvalidOperationException($"Could not find '{baseUri}'. This shouldn't happen.");
 			if (!registration.DynamicAnchors.ContainsKey(anchor))
 			{
-				var target = GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
+				var target = GetAnchor(baseUri, anchor, false, false) ?? throw new RefResolutionException(baseUri, anchor);
 				return (target, baseUri);
 			}
 		}
 
 		foreach (var uri in scope.Reverse())
 		{
-			var target = GetAnchor(uri, anchor, true);
+			var target = GetAnchor(uri, anchor, true, false);
 			if (target is not null) return (target, uri);
 		}
 
@@ -108,13 +113,13 @@ public class SchemaRegistry
 		return resolved ?? throw new NotImplementedException();
 	}
 
-	private JsonObject? GetAnchor(Uri baseUri, string? anchor, bool isDynamic)
+	private JsonObject? GetAnchor(Uri baseUri, string? anchor, bool isDynamic, bool allowLegacy)
 	{
-		return GetAnchorFromRegistry(_registry, baseUri, anchor, isDynamic) ??
-		       GetAnchorFromRegistry(Global._registry, baseUri, anchor, isDynamic);
+		return GetAnchorFromRegistry(_registry, baseUri, anchor, isDynamic, allowLegacy) ??
+		       GetAnchorFromRegistry(Global._registry, baseUri, anchor, isDynamic, allowLegacy);
 	}
 
-	private static JsonObject? GetAnchorFromRegistry(Dictionary<Uri, Registration> registry, Uri baseUri, string? anchor, bool isDynamic)
+	private static JsonObject? GetAnchorFromRegistry(Dictionary<Uri, Registration> registry, Uri baseUri, string? anchor, bool isDynamic, bool allowLegacy)
 	{
 		if (!registry.TryGetValue(baseUri, out var registration)) return null;
 
@@ -122,12 +127,12 @@ public class SchemaRegistry
 
 		var anchorList = isDynamic ? registration.DynamicAnchors : registration.Anchors;
 
-		return anchorList.GetValueOrDefault(anchor);
+		return anchorList.GetValueOrDefault(anchor) ?? (allowLegacy ? registration.LegacyAnchors.GetValueOrDefault(anchor) : null);
 	}
 
 	private static Uri GenerateId() => new(JsonSchema.DefaultBaseUri, Guid.NewGuid().ToString("N")[..10]);
 
-	private static Dictionary<Uri, Registration> Scan(Uri baseUri, JsonObject schema)
+	private Dictionary<Uri, Registration> Scan(Uri baseUri, JsonObject schema)
 	{
 		var toCheck = new Queue<(Uri, JsonObject)>();
 		toCheck.Enqueue((baseUri, schema));
@@ -138,15 +143,19 @@ public class SchemaRegistry
 		{
 			var (currentUri, currentSchema) = toCheck.Dequeue();
 
+			_reverseLookup[currentSchema] = currentUri;
+
 			var idText = (currentSchema["$id"] as JsonValue)?.GetString();
-			if (idText is not null) 
-				currentUri = new Uri(currentUri, idText);
+			if (idText is not null) currentUri = new Uri(currentUri, idText);
 
 			if (!registrations.TryGetValue(currentUri, out var registration))
 				registrations[currentUri] = registration = new Registration
 				{
 					Root = currentSchema
 				};
+
+			if (!string.IsNullOrEmpty(idText) && idText[0] == '#' && AnchorPattern201909.IsMatch(idText[1..])) 
+				registration.LegacyAnchors[idText[1..]] = currentSchema;
 
 			var dynamicAnchor = (currentSchema["$dynamicAnchor"] as JsonValue)?.GetString();
 			if (dynamicAnchor is not null)

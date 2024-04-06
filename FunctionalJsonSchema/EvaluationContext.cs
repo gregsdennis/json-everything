@@ -91,7 +91,11 @@ public struct EvaluationContext
 		IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> withHandlers;
 		if (objSchema.ContainsKey("$ref") &&
 		    (EvaluatingAs == MetaSchemas.Draft6Id || EvaluatingAs == MetaSchemas.Draft7Id))
+		{
+			if (currentBaseUri is not null && objSchema.ContainsKey("$id"))
+				BaseUri = currentBaseUri;
 			withHandlers = [(objSchema.Single(x => x.Key == "$ref"), RefKeywordHandler.Instance)];
+		}
 		else
 			withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabs);
 

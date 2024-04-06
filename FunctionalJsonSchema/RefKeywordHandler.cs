@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
 using Json.More;
 using Json.Pointer;
 
@@ -10,8 +9,6 @@ namespace FunctionalJsonSchema;
 public class RefKeywordHandler : IKeywordHandler
 {
 	public static RefKeywordHandler Instance { get; } = new();
-
-	private static readonly Regex _anchorPattern202012 = new("^[A-Za-z_][-A-Za-z0-9._]*$");
 
 	public string Name => "$ref";
 	public string[]? Dependencies { get; }
@@ -40,11 +37,12 @@ public class RefKeywordHandler : IKeywordHandler
 		}
 		else
 		{
+			var allowLegacy = context.EvaluatingAs == MetaSchemas.Draft6Id || context.EvaluatingAs == MetaSchemas.Draft7Id;
 			var anchor = fragment[1..];
-			if (!_anchorPattern202012.IsMatch(anchor))
+			if (!SchemaRegistry.AnchorPattern202012.IsMatch(anchor))
 				throw new SchemaValidationException($"Unrecognized fragment type `{newUri}`", context);
 
-			target = context.Options.SchemaRegistry.Get(newBaseUri, anchor);
+			target = context.Options.SchemaRegistry.Get(newBaseUri, anchor, allowLegacy);
 		}
 
 		var localContext = context;
