@@ -78,6 +78,7 @@ namespace Json.Schema;
 [JsonSerializable(typeof(PropertyDependency))]
 [JsonSerializable(typeof(SchemaValueType))]
 [JsonSerializable(typeof(EvaluationResults))]
+[JsonSerializable(typeof(Experiments.EvaluationResults), TypeInfoPropertyName = "ExperimentsEvaluationResults")]
 [JsonSerializable(typeof(JsonPointer))]
 [JsonSerializable(typeof(JsonNode))]
 [JsonSerializable(typeof(IReadOnlyCollection<JsonNode>))]

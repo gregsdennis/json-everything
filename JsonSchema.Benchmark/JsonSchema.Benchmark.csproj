@@ -20,7 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FunctionalJsonSchema\FunctionalJsonSchema.csproj" />
     <ProjectReference Include="..\JsonSchema\JsonSchema.csproj" />
   </ItemGroup>
 

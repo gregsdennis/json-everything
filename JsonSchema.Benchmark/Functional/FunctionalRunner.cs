@@ -1,7 +1,9 @@
 ﻿using System.Text.Json.Nodes;
 using BenchmarkDotNet.Attributes;
 
-using FJsonSchema = FunctionalJsonSchema.JsonSchema;
+using ExperimentsSchema = Json.Schema.Experiments.JsonSchema;
+using ExperimentsOptions = Json.Schema.Experiments.EvaluationOptions;
+using ExperimentsResults = Json.Schema.Experiments.EvaluationResults;
 
 namespace Json.Schema.Benchmark.Functional;
 
@@ -12,6 +14,7 @@ public class FunctionalRunner
 		"""
 		{
 		  "$schema": "https://json-schema.org/draft/2020-12/schema",
+		  "$id": "https://benchmark.json-everything.net/schema",
 		  "properties": {
 		    "foo": {},
 		    "bar": {}
@@ -64,7 +67,7 @@ public class FunctionalRunner
 		{
 			var schema = JsonNode.Parse(_schemaText)!;
 
-			_ = FJsonSchema.Evaluate(schema, _instance);
+			_ = ExperimentsSchema.Evaluate(schema, _instance);
 		}
 
 		return Count;
@@ -77,7 +80,7 @@ public class FunctionalRunner
 
 		for (int i = 0; i < Count; i++)
 		{
-			_ = FJsonSchema.Evaluate(schema, _instance);
+			_ = ExperimentsSchema.Evaluate(schema, _instance);
 		}
 
 		return Count;
