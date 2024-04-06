@@ -16,7 +16,6 @@ public struct EvaluationContext
 	public JsonNode? LocalInstance { get; set; }
 	public EvaluationOptions Options { get; internal set; }
 	public DynamicScope DynamicScope { get; }
-	public Vocabulary[] Vocabularies { get; private set; }
 
 	internal Uri? RefUri { get; set; }
 
@@ -46,26 +45,10 @@ public struct EvaluationContext
 
 		var currentBaseUri = BaseUri;
 
-		Uri? baseUri = null;
-		if (objSchema.TryGetValue("$id", out var idNode, out _))
-		{
-			var id = (idNode as JsonValue)?.GetString();
-			if (!Uri.TryCreate(id, UriKind.RelativeOrAbsolute, out baseUri))
-				throw new SchemaValidationException("$id must be a valid URI", this);
-			//if (baseUri.IsAbsoluteUri && !string.IsNullOrEmpty(baseUri.Fragment))
-			//	throw new SchemaValidationException("$id must not contain a fragment", this);
-			if (!baseUri.IsAbsoluteUri && BaseUri is null)
-				baseUri = new Uri(JsonSchema.DefaultBaseUri, baseUri);
-		}
-
-		if (baseUri is not null)
-		{
-			BaseUri = BaseUri is null
-				? baseUri
-				: new Uri(BaseUri, baseUri);
-			SchemaLocation = JsonPointer.Empty;
-		}
-		if (RefUri is not null)
+		var lookup = Options.SchemaRegistry.GetUri(objSchema);
+		if (lookup is not null)
+			BaseUri = lookup;
+		else if (RefUri is not null)
 			BaseUri = RefUri;
 
 		if (currentBaseUri != BaseUri) 
@@ -89,8 +72,8 @@ public struct EvaluationContext
 					throw new SchemaValidationException("$vocabulary values must be booleans", this);
 				vocabs = vocabIds
 					.Select(x => x.Value == true
-						? FunctionalJsonSchema.Vocabularies.Get(x.Key)
-						: FunctionalJsonSchema.Vocabularies.TryGet(x.Key))
+						? Vocabularies.Get(x.Key)
+						: Vocabularies.TryGet(x.Key))
 					.Where(x => x is not null)
 					.ToArray()!;
 			}
@@ -104,6 +87,7 @@ public struct EvaluationContext
 		foreach (var entry in withHandlers)
 		{
 			var keywordContext = this;
+			keywordContext.RefUri = null;
 			var keywordResult = entry.Handler?.Handle(entry.Keyword.Value, keywordContext, evaluations) ??
 			                    new KeywordEvaluation
 			                    {

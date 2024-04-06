@@ -9,14 +9,20 @@ namespace FunctionalJsonSchema;
 
 public class DynamicRefKeywordHandler : IKeywordHandler
 {
+	private readonly bool _requireLocalAnchor;
+
 	private static readonly Regex _anchorPattern202012 = new("^[A-Za-z_][-A-Za-z0-9._]*$");
 
-	public static DynamicRefKeywordHandler Instance { get; } = new();
+	public static DynamicRefKeywordHandler RequireAdjacentAnchor { get; } = new(true);
+	public static DynamicRefKeywordHandler Instance { get; } = new(false);
 
 	public string Name => "$dynamicRef";
 	public string[]? Dependencies { get; }
 
-	private DynamicRefKeywordHandler() { }
+	private DynamicRefKeywordHandler(bool requireLocalAnchor)
+	{
+		_requireLocalAnchor = requireLocalAnchor;
+	}
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
@@ -44,7 +50,7 @@ public class DynamicRefKeywordHandler : IKeywordHandler
 			if (!_anchorPattern202012.IsMatch(anchor))
 				throw new SchemaValidationException($"Unrecognized fragment type `{newUri}`", context);
 
-			(target, newBaseUri) = context.Options.SchemaRegistry.Get(context.DynamicScope, newBaseUri, anchor);
+			(target, newBaseUri) = context.Options.SchemaRegistry.Get(context.DynamicScope, newBaseUri, anchor, _requireLocalAnchor);
 		}
 
 		var localContext = context;

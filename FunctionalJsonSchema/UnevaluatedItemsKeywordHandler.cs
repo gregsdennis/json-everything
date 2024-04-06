@@ -10,7 +10,7 @@ public class UnevaluatedItemsKeywordHandler : IKeywordHandler
 	public static UnevaluatedItemsKeywordHandler Instance { get; } = new();
 
 	public string Name => "unevaluatedItems";
-	public string[]? Dependencies { get; } = ["contains", "prefixItems", "items", "unevaluatedItems"];
+	public string[]? Dependencies { get; } = ["additionalItems", "contains", "prefixItems", "items", "unevaluatedItems"];
 
 	private UnevaluatedItemsKeywordHandler() { }
 
@@ -20,6 +20,7 @@ public class UnevaluatedItemsKeywordHandler : IKeywordHandler
 
 		var indexAnnotations = evaluations.GetAllAnnotations<JsonValue>("prefixItems")
 			.Concat(evaluations.GetAllAnnotations<JsonValue>("items"))
+			.Concat(evaluations.GetAllAnnotations<JsonValue>("additionalItems"))
 			.Concat(evaluations.GetAllAnnotations<JsonValue>("unevaluatedItems"))
 			.ToArray();
 

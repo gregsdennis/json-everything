@@ -16,7 +16,7 @@ public class DependentSchemasKeywordHandler : IKeywordHandler
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations)
 	{
 		if (keywordValue is not JsonObject constraints)
-			throw new SchemaValidationException("'dependentSchemas' keyword must contain an object with string array values", context);
+			throw new SchemaValidationException("'dependentSchemas' keyword must contain an object", context);
 
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
@@ -41,7 +41,6 @@ public class DependentSchemasKeywordHandler : IKeywordHandler
 			Valid = results.All(x => x.Valid),
 			Children = results
 		};
-
 	}
 
 	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonObject a ? [.. a.Select(x => x.Value)] : [];

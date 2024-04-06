@@ -10,16 +10,19 @@ public class SchemaRegistry
 {
 	private class Registration
 	{
-		public JsonObject Root { get; set; }
+		public required JsonObject Root { get; init; }
 		public Dictionary<string, JsonObject> Anchors { get; } = [];
 		public Dictionary<string, JsonObject> DynamicAnchors { get; } = [];
+		public JsonObject? RecursiveAnchor { get; set; }
 	}
 
 	private readonly Dictionary<Uri, Registration> _registry;
+	private readonly Dictionary<JsonObject, Uri> _reverseLookup;
 
 	internal SchemaRegistry(SchemaRegistry? other)
 	{
 		_registry = new(other?._registry ?? []);
+		_reverseLookup = [];
 	}
 
 	public Uri Register(JsonObject schema)
@@ -40,6 +43,7 @@ public class SchemaRegistry
 		foreach (var registration in registrations)
 		{
 			_registry[registration.Key] = registration.Value;
+			_reverseLookup[registration.Value.Root] = registration.Key;
 		}
 
 		if (!_registry.ContainsKey(baseUri))
@@ -50,18 +54,26 @@ public class SchemaRegistry
 		}
 	}
 
-	public JsonObject Get(Uri baseUri, string? anchor = null)
+	internal JsonObject Get(Uri baseUri, string? anchor = null)
 	{
 		return GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
 	}
 
-	public (JsonObject, Uri) Get(DynamicScope scope, Uri baseUri, string anchor)
+	internal Uri? GetUri(JsonObject schema)
 	{
-		var registration = _registry[baseUri];
-		if (!registration.DynamicAnchors.ContainsKey(anchor))
+		return _reverseLookup.GetValueOrDefault(schema);
+	}
+
+	internal (JsonObject, Uri) Get(DynamicScope scope, Uri baseUri, string anchor, bool requireLocalAnchor)
+	{
+		if (requireLocalAnchor)
 		{
-			var target = GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
-			return (target, baseUri);
+			var registration = _registry[baseUri];
+			if (!registration.DynamicAnchors.ContainsKey(anchor))
+			{
+				var target = GetAnchor(baseUri, anchor, false) ?? throw new RefResolutionException(baseUri, anchor);
+				return (target, baseUri);
+			}
 		}
 
 		foreach (var uri in scope.Reverse())
@@ -71,6 +83,22 @@ public class SchemaRegistry
 		}
 
 		throw new RefResolutionException(scope.LocalScope, anchor, true);
+	}
+
+	internal (JsonObject, Uri) GetRecursive(DynamicScope scope)
+	{
+		(JsonObject, Uri)? resolved = null;
+		foreach (var uri in scope)
+		{
+			var registration = _registry[uri];
+			if (registration.RecursiveAnchor is null)
+				return resolved ?? (registration.Root, uri);
+
+			resolved = (registration.RecursiveAnchor, uri);
+		}
+
+		// resolved should always be set
+		return resolved ?? throw new NotImplementedException();
 	}
 
 	private JsonObject? GetAnchor(Uri baseUri, string? anchor, bool isDynamic)
@@ -113,6 +141,10 @@ public class SchemaRegistry
 				registration.Anchors[dynamicAnchor] = currentSchema;
 				registration.DynamicAnchors[dynamicAnchor] = currentSchema;
 			}
+
+			var recursiveAnchor = (currentSchema["$recursiveAnchor"] as JsonValue)?.GetBool() == true;
+			if (recursiveAnchor) 
+				registration.RecursiveAnchor = currentSchema;
 
 			var anchor = (currentSchema["$anchor"] as JsonValue)?.GetString();
 			if (anchor is not null)

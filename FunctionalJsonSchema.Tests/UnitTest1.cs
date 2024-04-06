@@ -11,15 +11,7 @@ public class Tests
 	private static readonly JsonNode _schema = JsonNode.Parse(
 		"""
 		{
-		  "$schema": "https://json-schema.org/draft/2020-12/schema",
-		  "properties": {
-		    "foo": {},
-		    "bar": {}
-		  },
-		  "patternProperties": {
-		    "^v": {}
-		  },
-		  "additionalProperties": false
+		  "$ref": "#"
 		}
 		""")!;
 

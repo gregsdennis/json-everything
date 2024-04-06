@@ -11,8 +11,8 @@ public static partial class Vocabularies
 			SchemaKeywordHandler.Instance,
 			RefKeywordHandler.Instance,
 			AnchorKeywordHandler.Instance,
-			DynamicRefKeywordHandler.Instance,
-			DynamicAnchorKeywordHandler.Instance,
+			RecursiveRefKeywordHandler.Instance,
+			RecursiveAnchorKeywordHandler.Instance,
 			VocabularyKeywordHandler.Instance,
 			CommentKeywordHandler.Instance,
 			DefsKeywordHandler.Instance);

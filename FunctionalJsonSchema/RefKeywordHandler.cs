@@ -48,7 +48,8 @@ public class RefKeywordHandler : IKeywordHandler
 		}
 
 		var localContext = context;
-		localContext.RefUri = newBaseUri;
+		if (newBaseUri.OriginalString != context.BaseUri.OriginalString)
+			localContext.RefUri = newBaseUri;
 		localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name);
 		localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name);
 
