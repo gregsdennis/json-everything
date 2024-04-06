@@ -19,6 +19,7 @@ public struct EvaluationContext
 
 	internal Uri? RefUri { get; set; }
 	internal Uri EvaluatingAs { get; set; }
+	internal HashSet<(JsonNode Schema, JsonNode? Instance)> NavigationRefs { get; } = [];
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 	public EvaluationContext()
@@ -56,6 +57,10 @@ public struct EvaluationContext
 
 		if (currentBaseUri != BaseUri) 
 			DynamicScope.Push(BaseUri);
+
+		var navigation = (localSchema, LocalInstance);
+		if (!NavigationRefs.Add(navigation))
+			throw new InvalidOperationException($"Encountered circular reference at schema location `{BaseUri}#{SchemaLocation}` and instance location `{InstanceLocation}`");
 
 		EvaluatingAs ??= Options.DefaultMetaSchema;
 		Vocabulary[] vocabs = [];
@@ -124,12 +129,14 @@ public struct EvaluationContext
 		if (currentBaseUri != BaseUri)
 			DynamicScope.Pop();
 
+		NavigationRefs.Remove(navigation);
+
 		return new EvaluationResults
 		{
 			Valid = valid,
 			SchemaLocation = SchemaLocation.Segments.Any() 
-				? new Uri(BaseUri!, SchemaLocation.ToString(JsonPointerStyle.UriEncoded))
-				: BaseUri!,
+				? new Uri(BaseUri, SchemaLocation.ToString())
+				: BaseUri,
 			InstanceLocation = InstanceLocation,
 			EvaluationPath = EvaluationPath,
 			Details = evaluations.Any() ? evaluations.SelectMany(x => x.Children).ToArray() : null,

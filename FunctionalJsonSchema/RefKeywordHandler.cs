@@ -49,7 +49,7 @@ public class RefKeywordHandler : IKeywordHandler
 		if (newBaseUri.OriginalString != context.BaseUri.OriginalString)
 			localContext.RefUri = newBaseUri;
 		localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name);
-		localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name);
+		localContext.SchemaLocation = pointer ?? JsonPointer.Empty;
 
 		var result = localContext.Evaluate(target);
 
