@@ -28,6 +28,7 @@ public static partial class Vocabularies
 			PatternPropertiesKeywordHandler.Instance,
 			DependentSchemasKeywordHandler.Instance,
 			PropertyNamesKeywordHandler.Instance,
+			PropertyDependenciesKeywordHandler.Instance,
 			IfKeywordHandler.Instance,
 			ThenKeywordHandler.Instance,
 			ElseKeywordHandler.Instance,

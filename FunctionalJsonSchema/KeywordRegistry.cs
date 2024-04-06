@@ -60,6 +60,7 @@ public static class KeywordRegistry
 			PatternPropertiesKeywordHandler.Instance,
 			PrefixItemsKeywordHandler.Instance,
 			PropertiesKeywordHandler.Instance,
+			PropertyDependenciesKeywordHandler.Instance,
 			PropertyNamesKeywordHandler.Instance,
 			ReadOnlyKeywordHandler.Instance,
 			RecursiveAnchorKeywordHandler.Instance,
