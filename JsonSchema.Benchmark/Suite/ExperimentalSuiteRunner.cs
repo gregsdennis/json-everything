@@ -4,13 +4,18 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using BenchmarkDotNet.Attributes;
 using Json.More;
+
+using ExperimentsSchema = Json.Schema.Experiments.JsonSchema;
+using ExperimentsOptions = Json.Schema.Experiments.EvaluationOptions;
+using ExperimentsResults = Json.Schema.Experiments.EvaluationResults;
 
 namespace Json.Schema.Benchmark.Suite;
 
 [MemoryDiagnoser]
-public class TestSuiteRunner
+public class ExperimentalSuiteRunner
 {
 	private const string _benchmarkOffset = @"../../../../";
 	private const string _testCasesPath = @"../../../../ref-repos/JSON-Schema-Test-Suite/tests";
@@ -18,16 +23,16 @@ public class TestSuiteRunner
 
 	private const bool _runDraftNext = true;
 
-	public static IEnumerable<TestCollection> GetAllTests()
+	public static IEnumerable<ExperimentalTestCollection> GetAllTests()
 	{
 		return GetTests("draft6")
 			.Concat(GetTests("draft7"))
 			.Concat(GetTests("draft2019-09"))
 			.Concat(GetTests("draft2020-12"))
-			.Concat(_runDraftNext ? GetTests("draft-next") : Enumerable.Empty<TestCollection>());
+			.Concat(_runDraftNext ? GetTests("draft-next") : Enumerable.Empty<ExperimentalTestCollection>());
 	}
 
-	private static IEnumerable<TestCollection> GetTests(string draftFolder)
+	private static IEnumerable<ExperimentalTestCollection> GetTests(string draftFolder)
 	{
 		// ReSharper disable once HeuristicUnreachableCode
 
@@ -40,40 +45,29 @@ public class TestSuiteRunner
 		}
 
 		var fileNames = Directory.GetFiles(testsPath, "*.json", SearchOption.AllDirectories);
-		var options = new EvaluationOptions
-		{
-			OutputFormat = OutputFormat.List
-		};
-		switch (draftFolder)
-		{
-			case "draft6":
-				options.EvaluateAs = SpecVersion.Draft6;
-				break;
-			case "draft7":
-				options.EvaluateAs = SpecVersion.Draft7;
-				break;
-			case "draft2019-09":
-				options.EvaluateAs = SpecVersion.Draft201909;
-				break;
-			case "draft2020-12":
-				options.EvaluateAs = SpecVersion.Draft202012;
-				break;
-			case "draft-next":
-				// options.ValidateAs = SpecVersion.DraftNext;
-				break;
-		}
 
 		foreach (var fileName in fileNames)
 		{
 			var shortFileName = Path.GetFileNameWithoutExtension(fileName);
 
 			// adjust for format
+			var options = new ExperimentsOptions();
+			options.DefaultMetaSchema = draftFolder switch
+			{
+				"draft6" => MetaSchemas.Draft6Id,
+				"draft7" => MetaSchemas.Draft7Id,
+				"draft2019-09" => MetaSchemas.Draft201909Id,
+				"draft2020-12" => MetaSchemas.Draft202012Id,
+				"draft-next" => MetaSchemas.DraftNextId,
+				_ => options.DefaultMetaSchema
+			};
 			options.RequireFormatValidation = fileName.Contains("format/".AdjustForPlatform()) &&
-											  // uri-template will throw an exception as it's explicitly unsupported
-											  shortFileName != "uri-template";
+			                                  // uri-template will throw an exception as it's explicitly unsupported
+			                                  shortFileName != "uri-template";
+
 
 			var contents = File.ReadAllText(fileName);
-			var collections = JsonSerializer.Deserialize<List<TestCollection>>(contents, new JsonSerializerOptions
+			var collections = JsonSerializer.Deserialize<List<ExperimentalTestCollection>>(contents, new JsonSerializerOptions
 			{
 				PropertyNameCaseInsensitive = true
 			});
@@ -81,7 +75,7 @@ public class TestSuiteRunner
 			foreach (var collection in collections!)
 			{
 				collection.IsOptional = fileName.Contains("optional");
-				collection.Options = EvaluationOptions.From(options);
+				collection.Options = options;
 
 				yield return collection;
 			}
@@ -99,9 +93,9 @@ public class TestSuiteRunner
 
 		foreach (var fileName in fileNames)
 		{
-			var schema = JsonSchema.FromFile(fileName);
+			var schema = (JsonObject)JsonNode.Parse(File.ReadAllText(fileName))!;
 			var uri = new Uri(fileName.Replace(remotesPath, "http://localhost:1234").Replace('\\', '/'));
-			SchemaRegistry.Global.Register(uri, schema);
+			Experiments.SchemaRegistry.Global.Register(uri, schema);
 		}
 	}
 
@@ -132,13 +126,19 @@ public class TestSuiteRunner
 		return i;
 	}
 
-	private void Benchmark(TestCollection collection, TestCase test, int n)
+	private void Benchmark(ExperimentalTestCollection collection, TestCase test, int n)
 	{
 		if (!InstanceIsDeserializable(test.Data)) return;
 
 		for (int i = 0; i < n; i++)
 		{
-			_ = collection.Schema.Evaluate(test.Data, collection.Options);
+			try
+			{
+				_ = ExperimentsSchema.Evaluate(collection.Schema, test.Data, collection.Options);
+			}
+			catch (RegexParseException)
+			{
+			}
 		}
 	}
 
@@ -164,4 +164,37 @@ public class TestSuiteRunner
 			return false;
 		}
 	}
+}
+
+[MemoryDiagnoser]
+public class BothRunner
+{
+	private readonly TestSuiteRunner _testSuiteRunner = new();
+	private readonly ExperimentalSuiteRunner _experimentalSuiteRunner = new();
+
+	[GlobalSetup]
+	public void BenchmarkSetup()
+	{
+		_testSuiteRunner.BenchmarkSetup();
+		_experimentalSuiteRunner.BenchmarkSetup();
+	}
+
+	[Benchmark]
+	[Arguments(1)]
+	[Arguments(10)]
+	[Arguments(50)]
+	public int Legacy(int n)
+	{
+		return _testSuiteRunner.RunSuite(n);
+	}
+
+	[Benchmark]
+	[Arguments(1)]
+	[Arguments(10)]
+	[Arguments(50)]
+	public int Experimental(int n)
+	{
+		return _experimentalSuiteRunner.RunSuite(n);
+	}
+
 }

@@ -31,11 +31,11 @@ public class FunctionalRunner
 		{"foo":1,"vroom":2}
 		""")!;
 
-	[Params(1,10)]
+	[Params(1,10,50)]
 	public int Count { get; set; }
 
 	[Benchmark]
-	public int OOP()
+	public int DedicatedModel()
 	{
 		for (int i = 0; i < Count; i++)
 		{
@@ -48,7 +48,7 @@ public class FunctionalRunner
 	}
 
 	[Benchmark]
-	public int OOP_Reuse()
+	public int DedicatedModel_Reuse()
 	{
 		var schema = JsonSchema.FromText(_schemaText);
 
@@ -61,7 +61,7 @@ public class FunctionalRunner
 	}
 
 	[Benchmark]
-	public int Functional()
+	public int NodeModel()
 	{
 		for (int i = 0; i < Count; i++)
 		{
@@ -74,7 +74,7 @@ public class FunctionalRunner
 	}
 
 	[Benchmark]
-	public int Functional_Reuse()
+	public int NodeModel_Reuse()
 	{
 		var schema = JsonNode.Parse(_schemaText)!;
 
