@@ -63,7 +63,6 @@ public struct EvaluationContext
 			throw new InvalidOperationException($"Encountered circular reference at schema location `{BaseUri}#{SchemaLocation}` and instance location `{InstanceLocation}`");
 
 		EvaluatingAs ??= Options.DefaultMetaSchema;
-		Vocabulary[] vocabs = [];
 		var resourceRoot = Options.SchemaRegistry.Get(BaseUri);
 		if (resourceRoot.TryGetValue("$schema", out var schemaNode, out _))
 		{
@@ -75,23 +74,7 @@ public struct EvaluationContext
 		}
 
 		var metaSchema = Options.SchemaRegistry.Get(EvaluatingAs);
-		if (metaSchema.TryGetValue("$vocabulary", out var vocabNode, out _))
-		{
-			// TODO: cache this
-			if (vocabNode is not JsonObject vocabObject)
-				throw new SchemaValidationException("$vocabulary must be an object", this);
-
-			var vocabIds = vocabObject.ToDictionary(x => new Uri(x.Key, UriKind.Absolute), x => (x.Value as JsonValue)?.GetBool());
-			if (vocabIds.Any(x => x.Value is null))
-				throw new SchemaValidationException("$vocabulary values must be booleans", this);
-
-			vocabs = vocabIds
-				.Select(x => x.Value == true
-					? Vocabularies.Get(x.Key)
-					: Vocabularies.TryGet(x.Key))
-				.Where(x => x is not null)
-				.ToArray()!;
-		}
+		var vocabHandlers = Vocabularies.GetHandlersByMetaschema(metaSchema, this);
 
 		IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> withHandlers;
 		if (objSchema.ContainsKey("$ref") &&
@@ -102,28 +85,35 @@ public struct EvaluationContext
 			withHandlers = [(objSchema.Single(x => x.Key == "$ref"), RefKeywordHandler.Instance)];
 		}
 		else
-			withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabs);
+			withHandlers = KeywordRegistry.GetHandlers(objSchema, vocabHandlers); // also orders the handlers by priority
 
 		var valid = true;
 		var evaluations = new List<KeywordEvaluation>();
 		var annotations = new Dictionary<string, JsonNode?>();
-		foreach (var entry in withHandlers)
+		foreach (var (keyword, handler) in withHandlers)
 		{
 			var keywordContext = this;
 			keywordContext.RefUri = null;
-			var keywordResult = entry.Handler?.Handle(entry.Keyword.Value, keywordContext, evaluations) ??
+			var keywordResult = handler?.Handle(keyword.Value, keywordContext, evaluations) ??
 			                    new KeywordEvaluation
 			                    {
 									Valid = true,
-									Annotation = entry.Keyword.Value,
+									Annotation = keyword.Value,
 									HasAnnotation = true
 			                    };
 			valid &= keywordResult.Valid;
-			if (!ReferenceEquals(keywordResult, KeywordEvaluation.Skip))
-				keywordResult.Key = entry.Keyword.Key;
+			if (Equals(keywordResult, KeywordEvaluation.Annotate))
+				keywordResult = new KeywordEvaluation
+				{
+					Valid = true,
+					Annotation = keyword.Value,
+					HasAnnotation = true
+				};
+			if (!Equals(keywordResult, KeywordEvaluation.Skip))
+				keywordResult.Key = keyword.Key;
 			evaluations.Add(keywordResult);
 			if (keywordResult.HasAnnotation)
-				annotations[entry.Keyword.Key] = keywordResult.Annotation;
+				annotations[keyword.Key] = keywordResult.Annotation;
 		}
 
 		if (currentBaseUri != BaseUri)
@@ -134,13 +124,13 @@ public struct EvaluationContext
 		return new EvaluationResults
 		{
 			Valid = valid,
-			SchemaLocation = SchemaLocation.Segments.Any() 
+			SchemaLocation = SchemaLocation.Segments.Length != 0
 				? new Uri(BaseUri, SchemaLocation.ToString())
 				: BaseUri,
 			InstanceLocation = InstanceLocation,
 			EvaluationPath = EvaluationPath,
-			Details = evaluations.Any() ? evaluations.SelectMany(x => x.Children).ToArray() : null,
-			Annotations = valid && annotations.Any() ? annotations : null
+			Details = evaluations.Count != 0 ? evaluations.SelectMany(x => x.Children).ToArray() : null,
+			Annotations = valid && annotations.Count != 0 ? annotations : null
 		};
 	}
 }

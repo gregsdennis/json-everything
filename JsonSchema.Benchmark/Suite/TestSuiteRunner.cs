@@ -18,6 +18,8 @@ public class TestSuiteRunner
 
 	private const bool _runDraftNext = true;
 
+	private static (TestCollection, TestCase)[] _allTests;
+
 	public static IEnumerable<TestCollection> GetAllTests()
 	{
 		return GetTests("draft6")
@@ -109,7 +111,7 @@ public class TestSuiteRunner
 	public void BenchmarkSetup()
 	{
 		LoadRemoteSchemas();
-		_ = GetAllTests();
+		_allTests = GetAllTests().SelectMany(x => x.Tests.Where(t => InstanceIsDeserializable(t.Data)).Select(t => (x, t))).ToArray();
 	}
 
 	[Benchmark]
@@ -118,15 +120,12 @@ public class TestSuiteRunner
 	public int RunSuite(int n)
 	{
 		int i = 0;
-		var collections = GetAllTests();
+		var collections = _allTests;
 
-		foreach (var collection in collections)
+		foreach (var (collection, test) in collections)
 		{
-			foreach (var test in collection.Tests)
-			{
-				Benchmark(collection, test, n);
-				i++;
-			}
+			Benchmark(collection, test, n);
+			i++;
 		}
 
 		return i;

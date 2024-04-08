@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Nodes;
 
 namespace Json.Schema.Experiments;
@@ -18,18 +17,25 @@ public class AnyOfKeywordHandler : IKeywordHandler
 		if (keywordValue is not JsonArray constraints)
 			throw new SchemaValidationException("'anyOf' keyword must contain an array of schemas", context);
 
-		var results = constraints.Select((x, i) =>
+		var results = new EvaluationResults[constraints.Count];
+		bool valid = constraints.Count == 0;
+
+		for (int i = 0; i < constraints.Count; i++)
 		{
 			var localContext = context;
 			localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, i);
 			localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, i);
 
-			return localContext.Evaluate(x);
-		}).ToArray();
+			var evaluation = localContext.Evaluate(constraints[i]);
+
+			valid |= evaluation.Valid;
+
+			results[i] = evaluation;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.Any(x => x.Valid),
+			Valid = valid,
 			Children = [.. results]
 		};
 	}

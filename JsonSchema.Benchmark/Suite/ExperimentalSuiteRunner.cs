@@ -22,6 +22,7 @@ public class ExperimentalSuiteRunner
 	private const string _remoteSchemasPath = @"../../../../ref-repos/JSON-Schema-Test-Suite/remotes";
 
 	private const bool _runDraftNext = true;
+	private static (ExperimentalTestCollection, TestCase)[] _allTests;
 
 	public static IEnumerable<ExperimentalTestCollection> GetAllTests()
 	{
@@ -103,7 +104,7 @@ public class ExperimentalSuiteRunner
 	public void BenchmarkSetup()
 	{
 		LoadRemoteSchemas();
-		_ = GetAllTests();
+		_allTests = GetAllTests().SelectMany(x => x.Tests.Where(t => InstanceIsDeserializable(t.Data)).Select(t => (x, t))).ToArray();
 	}
 
 	[Benchmark]
@@ -112,15 +113,11 @@ public class ExperimentalSuiteRunner
 	public int RunSuite(int n)
 	{
 		int i = 0;
-		var collections = GetAllTests();
 
-		foreach (var collection in collections)
+		foreach (var (collection, test) in _allTests)
 		{
-			foreach (var test in collection.Tests)
-			{
-				Benchmark(collection, test, n);
-				i++;
-			}
+			Benchmark(collection, test, n);
+			i++;
 		}
 
 		return i;

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Nodes;
 using Json.More;
 
@@ -28,21 +27,31 @@ public class AdditionalItemsKeywordHandler : IKeywordHandler
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = instance.Skip(skip).Select((x, i) =>
+		var results = new EvaluationResults[instance.Count - skip];
+		bool valid = true;
+		int annotation = -1;
+
+		for (int i = 0; i < instance.Count - skip; i++)
 		{
+			var x = instance[skip + i];
 			var localContext = contextTemplate;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(skip + i);
 			localContext.LocalInstance = x;
 
-			return (Index: skip + i, Evaluation: localContext.Evaluate(keywordValue));
-		}).ToArray();
+			var evaluation = localContext.Evaluate(keywordValue);
+
+			valid &= evaluation.Valid;
+			annotation = skip + i;
+
+			results[i] = evaluation;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Any() ? results.Max(x => x.Index) : -1,
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = annotation,
+			HasAnnotation = annotation != -1,
+			Children = results
 		};
 	}
 

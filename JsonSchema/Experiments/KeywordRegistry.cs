@@ -100,14 +100,11 @@ public static class KeywordRegistry
 		UpdatePriorities();
 	}
 
-	internal static IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)> GetHandlers(JsonObject schema, Vocabulary[] vocabs)
+	internal static IEnumerable<(KeyValuePair<string, JsonNode?> Keyword, IKeywordHandler? Handler)>
+		GetHandlers(JsonObject schema, IReadOnlyDictionary<string, IKeywordHandler>? vocabHandlers)
 	{
-		var pairs = vocabs.Length != 0
-			? schema.Join(vocabs.SelectMany(x => x.Handlers),
-				s => s.Key,
-				h => h.Name,
-				(s, h) => (Keyword: s, Handler: h))!
-			: schema.Select(kvp => (Keyword: kvp, Handler: _handlers.GetValueOrDefault(kvp.Key)));
+		var handlers = vocabHandlers is not null && vocabHandlers.Count != 0 ? vocabHandlers : _handlers;
+		var pairs = schema.Select(kvp => (Keyword: kvp, Handler: handlers.GetValueOrDefault(kvp.Key)));
 
 		return pairs.OrderBy(x => _keywordPriorities.GetValueOrDefault(x.Keyword.Key));
 	}

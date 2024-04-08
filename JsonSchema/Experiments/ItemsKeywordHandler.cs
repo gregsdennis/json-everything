@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using Json.More;
 
@@ -46,45 +46,67 @@ public class ItemsKeywordHandler : IKeywordHandler
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = instance.Skip(skip).Select((x, i) =>
+		var results = new EvaluationResults[instance.Count - skip];
+		bool valid = true;
+		int annotation = -1;
+
+		for (int i = 0; i < instance.Count - skip; i++)
 		{
+			var x = instance[skip + i];
 			var localContext = contextTemplate;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(skip + i);
 			localContext.LocalInstance = x;
 
-			return (Index: skip + i, Evaluation: localContext.Evaluate(keywordValue));
-		}).ToArray();
+			var evaluation = localContext.Evaluate(keywordValue);
+
+			valid &= evaluation.Valid;
+			annotation = skip + i;
+
+			results[i] = evaluation;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Any() ? results.Max(x => x.Index) : -1,
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = annotation,
+			HasAnnotation = annotation != -1,
+			Children = results
 		};
 	}
 
 	private KeywordEvaluation HandleArray(JsonArray constraints, EvaluationContext context, JsonArray instance)
 	{
-		var items = instance.Zip(constraints, (i, c) => (Item: i, Constraint: c));
+		var count = Math.Min(instance.Count, constraints.Count);
 
-		var results = items.Select((x, i) =>
+		var results = new EvaluationResults[count];
+		bool valid = true;
+		int annotation = -1;
+
+		for (int i = 0; i < count; i++)
 		{
+			var item = instance[i];
+			var constraint = constraints[i];
+
 			var localContext = context;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(i);
 			localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, i);
 			localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, i);
-			localContext.LocalInstance = x.Item;
+			localContext.LocalInstance = item;
 
-			return (Index: i, Evaluation: localContext.Evaluate(x.Constraint));
-		}).ToArray();
+			var evaluation = localContext.Evaluate(constraint);
+
+			valid &= evaluation.Valid;
+			annotation = i;
+
+			results[i] = evaluation;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Any() ? results.Max(x => x.Index) : -1,
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = annotation,
+			HasAnnotation = annotation != -1,
+			Children = results
 		};
 	}
 

@@ -18,7 +18,7 @@ class Program
 		runner.BenchmarkSetup();
 		runner.RunSuite(1);
 #else
-		var summary = BenchmarkRunner.Run<BothRunner>();
+		var summary = BenchmarkRunner.Run<ExperimentalSuiteRunner>();
 #endif
 	}
 }

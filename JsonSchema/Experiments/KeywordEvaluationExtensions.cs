@@ -11,7 +11,7 @@ public static class KeywordEvaluationExtensions
 		where T : JsonNode
 	{
 		var evaluation = evaluations.SingleOrDefault(x => x.Key == keyword);
-		if (evaluation is null || !evaluation.HasAnnotation || evaluation.Annotation is not T node)
+		if (evaluation.Key is null || !evaluation.HasAnnotation || evaluation.Annotation is not T node)
 		{
 			annotation = null;
 			return false;

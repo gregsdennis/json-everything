@@ -29,26 +29,34 @@ public class ContainsKeywordHandler : IKeywordHandler
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = instance.Select((x, i) =>
+		var results = new EvaluationResults[instance.Count];
+		var validCount = 0;
+		var annotation = new JsonArray();
+
+		for (int i = 0; i < instance.Count; i++)
 		{
+			var x = instance[i];
 			var localContext = contextTemplate;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(i);
 			localContext.LocalInstance = x;
 
-			return (Index: i, Evaluation: localContext.Evaluate(keywordValue));
-		}).ToArray();
+			var evaluation = localContext.Evaluate(keywordValue);
 
-		var validIndices = results
-			.Where(x => x.Evaluation.Valid)
-			.Select(x => (JsonNode) x.Index)
-			.ToJsonArray();
+			if (evaluation.Valid)
+			{
+				validCount++;
+				annotation.Add((JsonNode)i);
+			}
 
+			results[i] = evaluation;
+		}
+		
 		return new KeywordEvaluation
 		{
-			Valid = minContains <= validIndices.Count && validIndices.Count <= maxContains,
-			Annotation = validIndices,
-			HasAnnotation = validIndices.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = minContains <= validCount && validCount <= maxContains,
+			Annotation = annotation,
+			HasAnnotation = annotation.Count != 0,
+			Children = results
 		};
 	}
 

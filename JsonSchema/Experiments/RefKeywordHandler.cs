@@ -24,8 +24,6 @@ public class RefKeywordHandler : IKeywordHandler
 		var newUri = new Uri(context.BaseUri, reference);
 		var fragment = newUri.Fragment;
 
-		// TODO handle navigation loops
-
 		var newBaseUri = new Uri(newUri.GetLeftPart(UriPartial.Query));
 
 		JsonNode? target;

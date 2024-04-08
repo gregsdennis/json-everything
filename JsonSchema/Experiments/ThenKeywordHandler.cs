@@ -16,7 +16,7 @@ public class ThenKeywordHandler : IKeywordHandler
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
 		var ifEvaluation = evaluations.FirstOrDefault(x => x.Key == "if");
-		if (ifEvaluation is null || !ifEvaluation.Children[0].Valid) return KeywordEvaluation.Skip;
+		if (ifEvaluation.Key is null || !ifEvaluation.Children[0].Valid) return KeywordEvaluation.Skip;
 
 		var localContext = context;
 		localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name);
