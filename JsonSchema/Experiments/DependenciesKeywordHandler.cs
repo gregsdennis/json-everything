@@ -21,37 +21,37 @@ public class DependenciesKeywordHandler : IKeywordHandler
 
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
-		var properties = instance.Join(constraints,
-			i => i.Key,
-			c => c.Key,
-			(i, c) => (Property: i.Key, Constraint: c.Value));
-
-		var results = properties.Select(x =>
+		var children = new List<EvaluationResults>();
+		var valid = true;
+		foreach (var constraint in constraints)
 		{
-			if (x.Constraint is JsonArray requiredArray)
-			{
-				var required = requiredArray.Select(x => (x as JsonValue)?.GetString()).ToArray();
-				if (required.Any(y => y is null))
-					throw new SchemaValidationException("'dependencies' keyword must contain an object with string array values", context);
+			if (!instance.ContainsKey(constraint.Key)) continue;
 
-				return (Property: x.Property, Valid: required.All(y => instance.ContainsKey(y!)), Child: null);
+			if (constraint.Value is JsonArray requiredArray)
+			{
+				var required = requiredArray.Select(y => (y as JsonValue)?.GetString()).ToArray();
+				if (required.Any(y => y is null))
+					throw new SchemaValidationException("'dependencies' keyword array value must only contain strings", context);
+				
+				valid &= required.All(y => instance.ContainsKey(y!));
+				continue;
 			}
 
 			var localContext = context;
-			localContext.EvaluationPath = context.EvaluationPath.Combine(Name, x.Property);
-			localContext.SchemaLocation = context.SchemaLocation.Combine(Name, x.Property);
+			localContext.EvaluationPath = context.EvaluationPath.Combine(Name, constraint.Key);
+			localContext.SchemaLocation = context.SchemaLocation.Combine(Name, constraint.Key);
 
-			var result = localContext.Evaluate(x.Constraint);
-
-			return (Property: x.Property, Valid: result.Valid, Child: result);
-		}).ToArray();
+			var result = localContext.Evaluate(constraint.Value);
+			valid &= result.Valid;
+			children.Add(result);
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Valid),
-			Children = results.Where(x => x.Child is not null).Select(x => x.Child!).ToArray()
+			Valid = valid,
+			Children = [.. children]
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

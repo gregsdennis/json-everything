@@ -55,5 +55,5 @@ public class AdditionalItemsKeywordHandler : IKeywordHandler
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

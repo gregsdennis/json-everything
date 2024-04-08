@@ -32,29 +32,37 @@ public class UnevaluatedPropertiesKeywordHandler : IKeywordHandler
 			.Select(x => x.GetString())
 			.ToArray();
 
-		var properties = instance.Where(x => !evaluatedProperties.Contains(x.Key));
+		var properties = instance.Where(x => !evaluatedProperties.Contains(x.Key)).ToArray();
 
 		var contextTemplate = context;
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = properties.Select(x =>
+		var results = new EvaluationResults[properties.Length];
+		bool valid = true;
+
+		int i = 0;
+		foreach (var x in properties)
 		{
 			var localContext = contextTemplate;
 			localContext.InstanceLocation = localContext.InstanceLocation.Combine(x.Key);
 			localContext.LocalInstance = x.Value;
 
-			return (Key: (JsonNode)x.Key, Evaluation: localContext.Evaluate(keywordValue));
-		}).ToArray();
+			var evaluation = localContext.Evaluate(keywordValue);
+
+			valid &= evaluation.Valid;
+			results[i] = evaluation;
+			i++;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Select(x => x.Key).ToJsonArray(),
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = properties.Select(x => (JsonNode)x.Key).ToJsonArray(),
+			HasAnnotation = properties.Length != 0,
+			Children = results
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

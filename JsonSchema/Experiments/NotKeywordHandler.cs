@@ -27,5 +27,5 @@ public class NotKeywordHandler : IKeywordHandler
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

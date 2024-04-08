@@ -17,5 +17,5 @@ public class DynamicAnchorKeywordHandler : IKeywordHandler
 		return KeywordEvaluation.Skip;
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

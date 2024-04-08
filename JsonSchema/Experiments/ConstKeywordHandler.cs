@@ -18,5 +18,5 @@ public class ConstKeywordHandler : IKeywordHandler
 		return context.LocalInstance.IsEquivalentTo(keywordValue);
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

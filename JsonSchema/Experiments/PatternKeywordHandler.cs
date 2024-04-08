@@ -31,5 +31,5 @@ public class PatternKeywordHandler : IKeywordHandler
 
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

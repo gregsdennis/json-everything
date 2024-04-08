@@ -17,5 +17,5 @@ public class ExamplesKeywordHandler : IKeywordHandler
 		return KeywordEvaluation.Annotate;
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

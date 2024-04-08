@@ -21,26 +21,23 @@ public class DependentRequiredKeywordHandler : IKeywordHandler
 
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
-		var properties = instance.Join(constraints,
-			i => i.Key,
-			c => c.Key,
-			(i, c) => (Property: i.Key, Required: c.Value));
-
-		var results = properties.Select(x =>
+		var valid = true;
+		foreach (var constraint in constraints)
 		{
-			if (x.Required is not JsonArray requiredArray)
-				throw new SchemaValidationException("'dependentRequired' keyword must contain an object with string array values", context);
+			if (!instance.ContainsKey(constraint.Key)) continue;
 
-			var required = requiredArray.Select(x => (x as JsonValue)?.GetString()).ToArray();
+			if (constraint.Value is not JsonArray requiredArray)
+					throw new SchemaValidationException("'dependencies' keyword array value must only contain strings", context);
+			
+			var required = requiredArray.Select(y => (y as JsonValue)?.GetString()).ToArray();
 			if (required.Any(y => y is null))
-				throw new SchemaValidationException("'dependentRequired' keyword must contain an object with string array values", context);
+				throw new SchemaValidationException("'dependencies' keyword array value must only contain strings", context);
 
-			return (Property: x.Property, Valid: required.All(y => instance.ContainsKey(y!)));
-		});
+			valid &= required.All(y => instance.ContainsKey(y!));
+		}
 
-		return results.All(x => x.Valid);
-
+		return valid;
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => (keywordValue as JsonObject)?.Where(x => x.Value is JsonObject).Select(x => x.Value) ?? [];
 }

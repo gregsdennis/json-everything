@@ -9,5 +9,5 @@ public interface IKeywordHandler
 	public string[]? Dependencies { get; }
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> siblingEvaluations);
-	public JsonNode?[] GetSubschemas(JsonNode? keywordValue);
+	public IEnumerable<JsonNode?> GetSubschemas(JsonNode? keywordValue);
 }

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json.Nodes;
 
 namespace Json.Schema.Experiments;
@@ -21,21 +20,29 @@ public class PropertyNamesKeywordHandler : IKeywordHandler
 		contextTemplate.EvaluationPath = context.EvaluationPath.Combine(Name);
 		contextTemplate.SchemaLocation = context.SchemaLocation.Combine(Name);
 
-		var results = instance.Select(x =>
+		var results = new EvaluationResults[instance.Count];
+		var valid = true;
+		var i = 0;
+
+		foreach (var kvp in instance)
 		{
 			var localContext = contextTemplate;
-			localContext.InstanceLocation = localContext.InstanceLocation.Combine(x.Key);
-			localContext.LocalInstance = x.Key;
+			localContext.InstanceLocation = localContext.InstanceLocation.Combine(kvp.Key);
+			localContext.LocalInstance = kvp.Key;
 
-			return localContext.Evaluate(keywordValue);
-		}).ToArray();
+			var evaluation = localContext.Evaluate(keywordValue);
+
+			valid &= evaluation.Valid;
+			results[i] = evaluation;
+			i++;
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Valid),
-			Children = [.. results]
+			Valid = valid,
+			Children = results
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [keywordValue];
 }

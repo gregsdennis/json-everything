@@ -21,30 +21,35 @@ public class PropertiesKeywordHandler : IKeywordHandler
 		if (keywordValue is not JsonObject constraints)
 			throw new SchemaValidationException("'properties' keyword must contain an object with schema values", context);
 
-		var properties = instance.Join(constraints,
-			i => i.Key,
-			c => c.Key,
-			(i, c) => (Property: i, Constraint: c));
+		var results = new List<EvaluationResults>();
+		var valid = true;
+		var annotation = new JsonArray();
 
-		var results = properties.Select(x =>
+		foreach (var constraint in constraints)
 		{
-			var localContext = context;
-			localContext.InstanceLocation = localContext.InstanceLocation.Combine(x.Property.Key);
-			localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, x.Property.Key);
-			localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, x.Property.Key);
-			localContext.LocalInstance = x.Property.Value;
+			if (!instance.TryGetValue(constraint.Key, out var value, out _)) continue;
 
-			return (Key: (JsonNode)x.Property.Key, Evaluation: localContext.Evaluate(x.Constraint.Value));
-		}).ToArray();
+			var localContext = context;
+			localContext.InstanceLocation = localContext.InstanceLocation.Combine(constraint.Key);
+			localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, constraint.Key);
+			localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, constraint.Key);
+			localContext.LocalInstance = value;
+
+			var evaluation = localContext.Evaluate(constraint.Value);
+
+			valid &= evaluation.Valid;
+			annotation.Add((JsonNode)constraint.Key);
+			results.Add(evaluation);
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Select(x => x.Key).ToJsonArray(),
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = annotation,
+			HasAnnotation = annotation.Count != 0,
+			Children = [.. results]
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonObject a ? [.. a.Select(x => x.Value)] : [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => (keywordValue as JsonObject)?.Select(x => x.Value) ?? [];
 }

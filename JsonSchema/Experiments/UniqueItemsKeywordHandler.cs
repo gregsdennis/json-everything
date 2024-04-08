@@ -28,5 +28,5 @@ public class UniqueItemsKeywordHandler : IKeywordHandler
 		return unique == false || instance.Count == instance.Distinct(JsonNodeEqualityComparer.Instance).Count();
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

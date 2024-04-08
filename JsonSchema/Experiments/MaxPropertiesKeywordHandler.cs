@@ -30,5 +30,5 @@ public class MaxPropertiesKeywordHandler : IKeywordHandler
 		throw new ArgumentException("'maxProperties' keyword must contain a number");
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

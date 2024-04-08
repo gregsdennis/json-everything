@@ -40,5 +40,5 @@ public class AnyOfKeywordHandler : IKeywordHandler
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonArray a ? [.. a] : [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue as JsonArray ?? [];
 }

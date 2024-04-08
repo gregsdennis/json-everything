@@ -30,5 +30,5 @@ public class ExclusiveMaximumKeywordHandler : IKeywordHandler
 
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

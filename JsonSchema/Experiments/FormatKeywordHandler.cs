@@ -33,5 +33,5 @@ public class FormatKeywordHandler : IKeywordHandler
 		return format.Validate(context.LocalInstance, out _);
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => [];
 }

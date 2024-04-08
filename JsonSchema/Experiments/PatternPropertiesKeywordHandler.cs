@@ -17,34 +17,43 @@ public class PatternPropertiesKeywordHandler : IKeywordHandler
 
 	public KeywordEvaluation Handle(JsonNode? keywordValue, EvaluationContext context, IReadOnlyCollection<KeywordEvaluation> evaluations)
 	{
-		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
-
 		if (keywordValue is not JsonObject constraints)
 			throw new SchemaValidationException("'patternProperties' keyword must contain an object with schema values", context);
 
-		var properties = instance.SelectMany(_ => constraints, (i, c) => (i, c))
-			.Where(x => Regex.IsMatch(x.i.Key, x.c.Key, RegexOptions.ECMAScript))
-			.Select(x => (Property: x.i, Constraint: x.c));
+		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
-		var results = properties.Select(x =>
+		var results = new List<EvaluationResults>();
+		var annotation = new HashSet<string>();
+		var valid = true;
+
+		foreach (var constraint in constraints)
 		{
-			var localContext = context;
-			localContext.InstanceLocation = localContext.InstanceLocation.Combine(x.Property.Key);
-			localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, x.Property.Key);
-			localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, x.Property.Key);
-			localContext.LocalInstance = x.Property.Value;
+			foreach (var kvp in instance)
+			{
+				if (!Regex.IsMatch(kvp.Key, constraint.Key, RegexOptions.ECMAScript)) continue;
 
-			return (Key: (JsonNode)x.Property.Key, Evaluation: localContext.Evaluate(x.Constraint.Value));
-		}).ToArray();
+				var localContext = context;
+				localContext.InstanceLocation = localContext.InstanceLocation.Combine(kvp.Key);
+				localContext.EvaluationPath = localContext.EvaluationPath.Combine(Name, kvp.Key);
+				localContext.SchemaLocation = localContext.SchemaLocation.Combine(Name, kvp.Key);
+				localContext.LocalInstance = kvp.Value;
+
+				var evaluation = localContext.Evaluate(constraint.Value);
+
+				results.Add(evaluation);
+				valid &= evaluation.Valid;
+				annotation.Add(kvp.Key);
+			}
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Evaluation.Valid),
-			Annotation = results.Select(x => x.Key).ToJsonArray(),
-			HasAnnotation = results.Any(),
-			Children = results.Select(x => x.Evaluation).ToArray()
+			Valid = valid,
+			Annotation = annotation.Select(x => (JsonNode) x).ToJsonArray(),
+			HasAnnotation = results.Count != 0,
+			Children = [.. results]
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue is JsonObject a ? [.. a.Select(x => x.Value)] : [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => (keywordValue as JsonObject)?.Select(x => x.Value) ?? [];
 }

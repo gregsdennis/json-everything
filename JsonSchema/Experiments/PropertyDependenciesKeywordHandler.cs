@@ -21,45 +21,49 @@ public class PropertyDependenciesKeywordHandler : IKeywordHandler
 
 		if (context.LocalInstance is not JsonObject instance) return KeywordEvaluation.Skip;
 
-		var properties = instance.Join(constraints,
-			i => i.Key,
-			c => c.Key,
-			(i, c) => (Property: i, Dependencies: c.Value))
-			.Select(x =>
-			{
-				var propertyValue = (x.Property.Value as JsonValue)?.GetString();
-				if (propertyValue is null) return (Property: x.Property.Key, Value: null!, Schema: null);
+		var results = new List<EvaluationResults>();
+		var valid = true;
 
-				if (x.Dependencies is not JsonObject dependencies)
-					throw new SchemaValidationException("'propertyDependencies' keyword must contain an object of objects", context);
+		foreach (var constraint in constraints)
+		{
+			if (constraint.Value is not JsonObject options)
+				throw new SchemaValidationException("'propertyDependencies' keyword must contain object values", context);
 
-				if (!dependencies.TryGetValue(propertyValue, out var dependency, out _))
-					return (Property: x.Property.Key, Value: propertyValue, Schema: null);
+			if (!instance.TryGetValue(constraint.Key, out var value, out _)) continue;
 
-				return (Property: x.Property.Key, Value: propertyValue, Schema: dependency);
-			})
-			.Where(x => x.Schema is not null);
+			var str = (value as JsonValue)?.GetString();
+			if (str is null) continue;
 
-		var results = properties
-			.Select(x =>
-			{
-				var localContext = context;
-				localContext.EvaluationPath = context.EvaluationPath.Combine(Name, x.Property, x.Value!);
-				localContext.SchemaLocation = context.SchemaLocation.Combine(Name, x.Property, x.Value!);
+			if (!options.TryGetValue(str, out var option, out _)) continue;
 
-				return localContext.Evaluate(x.Schema);
-			})
-			.ToArray();
+			var localContext = context;
+			localContext.EvaluationPath = context.EvaluationPath.Combine(Name, constraint.Key, str);
+			localContext.SchemaLocation = context.SchemaLocation.Combine(Name, constraint.Key, str);
+
+			var evaluation = localContext.Evaluate(option);
+
+			valid &= evaluation.Valid;
+			results.Add(evaluation);
+		}
 
 		return new KeywordEvaluation
 		{
-			Valid = results.All(x => x.Valid),
-			Children = results
+			Valid = valid,
+			Children = [.. results]
 		};
 	}
 
-	JsonNode?[] IKeywordHandler.GetSubschemas(JsonNode? keywordValue) =>
-		keywordValue is JsonObject a
-			? [.. a.SelectMany(x => (x.Value as JsonObject)?.Select(y => y.Value) ?? [])]
-			: [];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue)
+	{
+		if (keywordValue is not JsonObject a) yield break;
+
+		foreach (var kvp in a)
+		{
+			if (kvp.Value is not JsonObject b) continue;
+			foreach (var inner in b)
+			{
+				yield return inner.Value;
+			}
+		}
+	}
 }
