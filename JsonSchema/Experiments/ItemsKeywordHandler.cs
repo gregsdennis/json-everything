@@ -110,5 +110,16 @@ public class ItemsKeywordHandler : IKeywordHandler
 		};
 	}
 
-	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue) => keywordValue as JsonArray ?? [keywordValue];
+	IEnumerable<JsonNode?> IKeywordHandler.GetSubschemas(JsonNode? keywordValue)
+	{
+		if (keywordValue is JsonArray array)
+		{
+			foreach (var item in array)
+			{
+				yield return item;
+			}
+		}
+
+		yield return keywordValue;
+	}
 }
